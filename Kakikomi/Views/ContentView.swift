@@ -1,7 +1,18 @@
+import AppKit
 import SwiftUI
 
 struct ContentView: View {
     @ObservedObject var document: DocumentViewModel
+    @AppStorage("uiMode") private var uiMode = UIMode.simple.rawValue
+
+    private enum UIMode: String {
+        case simple
+        case detailed
+    }
+
+    private var isDetailedMode: Bool {
+        uiMode == UIMode.detailed.rawValue
+    }
 
     var body: some View {
         VStack(spacing: 0) {
@@ -14,7 +25,7 @@ struct ContentView: View {
                 .accessibilityIdentifier("openImageButton")
 
                 Button {
-                    document.openImageFromPasteboard()
+                    document.performPasteCommand()
                 } label: {
                     Label("ペースト", systemImage: "doc.on.clipboard")
                 }
@@ -32,6 +43,19 @@ struct ContentView: View {
                 .disabled(!document.hasImage)
                 .accessibilityIdentifier("toolPicker")
 
+                if !isDetailedMode {
+                    Divider().frame(height: 22)
+
+                    ColorPicker("注釈色", selection: Binding(
+                        get: { Color(nsColor: document.commonAnnotationColor) },
+                        set: { document.setCommonAnnotationColor(NSColor($0)) }
+                    ), supportsOpacity: true)
+                    .labelsHidden()
+                    .help("文字と矢印の色")
+                    .disabled(!document.hasImage)
+                    .accessibilityIdentifier("commonColorPicker")
+                }
+
                 Spacer()
 
                 Button {
@@ -41,6 +65,15 @@ struct ContentView: View {
                 }
                 .disabled(!document.hasImage)
                 .accessibilityIdentifier("picturesSaveButton")
+
+                Button {
+                    uiMode = isDetailedMode ? UIMode.simple.rawValue : UIMode.detailed.rawValue
+                } label: {
+                    Image(systemName: "slider.horizontal.3")
+                }
+                .help(isDetailedMode ? "簡易モードに切り替える" : "詳細モードに切り替える")
+                .accessibilityLabel(isDetailedMode ? "簡易モード" : "詳細モード")
+                .accessibilityIdentifier("uiModeToggle")
             }
             .buttonStyle(.bordered)
             .padding(10)
@@ -51,9 +84,11 @@ struct ContentView: View {
             HStack(spacing: 0) {
                 CanvasRepresentable(document: document)
                     .frame(maxWidth: .infinity, maxHeight: .infinity)
-                Divider()
-                InspectorView(document: document)
-                    .disabled(!document.hasImage)
+                if isDetailedMode {
+                    Divider()
+                    InspectorView(document: document)
+                        .disabled(!document.hasImage)
+                }
             }
 
             HStack {

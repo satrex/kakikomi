@@ -8,7 +8,122 @@ private func check(_ condition: @autoclosure () -> Bool, _ message: String) {
     }
 }
 
+private func makeTestImageURL() -> URL {
+    let colorSpace = CGColorSpace(name: CGColorSpace.sRGB)!
+    let context = CGContext(data: nil, width: 320, height: 240, bitsPerComponent: 8,
+                            bytesPerRow: 0, space: colorSpace,
+                            bitmapInfo: CGImageAlphaInfo.premultipliedLast.rawValue)!
+    context.setFillColor(NSColor.white.cgColor)
+    context.fill(CGRect(x: 0, y: 0, width: 320, height: 240))
+    let representation = NSBitmapImageRep(cgImage: context.makeImage()!)
+    let data = representation.representation(using: .png, properties: [:])!
+    let url = FileManager.default.temporaryDirectory
+        .appendingPathComponent("kakikomi-view-model-test-\(UUID().uuidString).png")
+    try! data.write(to: url)
+    return url
+}
+
 Task { @MainActor in
+    let black = CodableColor(red: 0, green: 0, blue: 0)
+    check(CodableColor.white.automaticOutlineColor == .darkOutline,
+          "white uses dark automatic outline")
+    check(black.automaticOutlineColor == .white,
+          "black uses white automatic outline")
+    check(CodableColor.accentPink.automaticOutlineColor == .white,
+          "accent pink uses white automatic outline")
+
+    let commonColorDocument = DocumentViewModel()
+    let commonColorTextID = commonColorDocument.addText(at: CGPoint(x: 8, y: 8))
+    commonColorDocument.setText("色テスト", for: commonColorTextID)
+    commonColorDocument.undoManager.beginUndoGrouping()
+    commonColorDocument.setCommonAnnotationColor(NSColor.white)
+    commonColorDocument.undoManager.endUndoGrouping()
+    if case .text(let text) = commonColorDocument.annotations[0] {
+        check(text.fillColor == .white && text.outlineColor == .darkOutline,
+              "common white is stored with a dark outline")
+    }
+    commonColorDocument.undoManager.beginUndoGrouping()
+    commonColorDocument.setCommonAnnotationColor(NSColor.black)
+    commonColorDocument.undoManager.endUndoGrouping()
+    if case .text(let text) = commonColorDocument.annotations[0] {
+        check(text.fillColor == black && text.outlineColor == .white,
+              "common black is stored with a white outline")
+    }
+    commonColorDocument.undoManager.beginUndoGrouping()
+    commonColorDocument.setCommonAnnotationColor(CodableColor.accentPink.nsColor)
+    commonColorDocument.undoManager.endUndoGrouping()
+    if case .text(let text) = commonColorDocument.annotations[0] {
+        check(text.fillColor == .accentPink && text.outlineColor == .white,
+              "common accent pink is stored with a white outline")
+    }
+
+    let originalText = TextAnnotation(
+        text: "複製テスト",
+        origin: CGPoint(x: 30, y: 40),
+        fontSize: 72,
+        fontName: "HiraginoSans-W8",
+        fillColor: .accentPink,
+        outlineColor: .white,
+        outlineWidthRatio: 0.18,
+        shadowEnabled: false
+    )
+    let duplicatedTextItem = AnnotationItem.text(originalText)
+        .duplicated(offset: CGSize(width: 16, height: 16))
+    if case .text(let duplicatedText) = duplicatedTextItem {
+        check(duplicatedText.id != originalText.id, "text duplicate gets a new UUID")
+        check(duplicatedText.origin == CGPoint(x: 46, y: 56), "text duplicate is offset")
+        var expected = originalText
+        expected.id = duplicatedText.id
+        expected.origin = duplicatedText.origin
+        check(duplicatedText == expected, "text duplicate preserves all other parameters")
+    }
+
+    let originalArrow = ArrowAnnotation(
+        start: CGPoint(x: 12, y: 24),
+        end: CGPoint(x: 96, y: 128),
+        color: .darkOutline,
+        lineWidth: 18
+    )
+    let duplicatedArrowItem = AnnotationItem.arrow(originalArrow)
+        .duplicated(offset: CGSize(width: 16, height: 16))
+    if case .arrow(let duplicatedArrow) = duplicatedArrowItem {
+        check(duplicatedArrow.id != originalArrow.id, "arrow duplicate gets a new UUID")
+        check(duplicatedArrow.start == CGPoint(x: 28, y: 40), "arrow start is offset")
+        check(duplicatedArrow.end == CGPoint(x: 112, y: 144), "arrow end is offset")
+        var expected = originalArrow
+        expected.id = duplicatedArrow.id
+        expected.start = duplicatedArrow.start
+        expected.end = duplicatedArrow.end
+        check(duplicatedArrow == expected, "arrow duplicate preserves all other parameters")
+    }
+
+    let pasteDocument = DocumentViewModel()
+    let testImageURL = makeTestImageURL()
+    pasteDocument.openImage(at: testImageURL)
+    try? FileManager.default.removeItem(at: testImageURL)
+    let encodedAnnotation = try! JSONEncoder().encode(AnnotationItem.text(originalText))
+    pasteDocument.undoManager.beginUndoGrouping()
+    let pastedID = pasteDocument.pasteAnnotationData(encodedAnnotation)
+    pasteDocument.undoManager.endUndoGrouping()
+    check(pastedID != nil, "JSON annotation is pasted")
+    check(pasteDocument.annotations.count == 1, "paste appends an annotation")
+    check(pasteDocument.selectedAnnotationID == pastedID, "pasted annotation is selected")
+    if case .text(let pastedText) = pasteDocument.annotations[0] {
+        check(pastedText.id != originalText.id, "pasted annotation gets a new UUID")
+        check(pastedText.origin == CGPoint(x: 46, y: 56), "pasted annotation is offset")
+    }
+    pasteDocument.undo()
+    check(pasteDocument.annotations.isEmpty, "paste undo restores the snapshot")
+
+    pasteDocument.undoManager.beginUndoGrouping()
+    _ = pasteDocument.pasteAnnotationData(encodedAnnotation)
+    pasteDocument.undoManager.endUndoGrouping()
+    if case .text(let pastedText) = pasteDocument.annotations[0] {
+        check(pastedText.origin == CGPoint(x: 62, y: 72),
+              "consecutive paste continues the 16 point cascade")
+    }
+    pasteDocument.undo()
+
     let pendingDocument = DocumentViewModel()
     let pendingID = pendingDocument.addText(at: CGPoint(x: 10, y: 10))
     var commitHookCallCount = 0

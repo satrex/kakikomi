@@ -37,6 +37,8 @@ final class CanvasView: NSView {
     private var cancellable: AnyCancellable?
     private var dragStartPoint: CGPoint?
     private var dragStartAnnotations: [AnnotationItem]?
+    private var dragStartAnnotation: AnnotationItem?
+    private var dragActionName = "注釈を移動"
     private var editingAnnotationID: UUID?
     private weak var textEditor: TextEditingOverlay?
     private var editingStartSnapshot: [AnnotationItem]?
@@ -161,6 +163,22 @@ final class CanvasView: NSView {
                 return
             }
             guard let id = document.selectAnnotation(at: imagePoint) else { return }
+            if event.modifierFlags.contains(.option),
+               let original = document.annotations.first(where: { $0.id == id }) {
+                let before = document.annotations
+                guard let duplicateID = document.appendDuplicate(of: original,
+                                                                  offset: .zero,
+                                                                  actionName: "複製",
+                                                                  registeringUndo: false),
+                      let duplicate = document.annotations.first(where: { $0.id == duplicateID }) else {
+                    return
+                }
+                dragStartPoint = imagePoint
+                dragStartAnnotations = before
+                dragStartAnnotation = duplicate
+                dragActionName = "複製"
+                return
+            }
             if event.clickCount == 2,
                let index = document.annotationIndex(id: id),
                case .text = document.annotations[index] {
@@ -169,6 +187,8 @@ final class CanvasView: NSView {
             }
             dragStartPoint = imagePoint
             dragStartAnnotations = document.annotations
+            dragStartAnnotation = document.annotations.first(where: { $0.id == id })
+            dragActionName = "注釈を移動"
         }
     }
 
@@ -189,8 +209,7 @@ final class CanvasView: NSView {
               let image = document.baseImage,
               let selectedID = document.selectedAnnotationID,
               let startPoint = dragStartPoint,
-              let originals = dragStartAnnotations,
-              let original = originals.first(where: { $0.id == selectedID }),
+              let original = dragStartAnnotation,
               let index = document.annotationIndex(id: selectedID) else { return }
         let currentPoint = clampedImagePoint(from: convert(event.locationInWindow, from: nil), image: image)
         var moved = original
@@ -214,13 +233,15 @@ final class CanvasView: NSView {
         } else if let resizeState, let document {
             document.commitSnapshot(resizeState.originalAnnotations, actionName: "文字サイズを変更")
         } else if let originals = dragStartAnnotations, let document {
-            document.commitSnapshot(originals, actionName: "注釈を移動")
+            document.commitSnapshot(originals, actionName: dragActionName)
         }
         resizeState = nil
         arrowResizeState = nil
         drawingArrowID = nil
         dragStartPoint = nil
         dragStartAnnotations = nil
+        dragStartAnnotation = nil
+        dragActionName = "注釈を移動"
         window?.invalidateCursorRects(for: self)
     }
 

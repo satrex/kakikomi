@@ -22,8 +22,8 @@ final class DocumentViewModel: ObservableObject {
     @Published var activeTool: Tool = .select
     @Published var lastErrorMessage: String?
     @Published var statusMessage: String?
-    @Published private var defaultTextFillColor: CodableColor = .white
-    @Published private var defaultTextOutlineColor: CodableColor = .darkOutline
+    @Published private var defaultTextFillColor: CodableColor = .accentPink
+    @Published private var defaultTextOutlineColor: CodableColor = .white
     @Published private var defaultOutlineRatio: CGFloat = 0.12
     @Published private var defaultFontWeight: FontWeightOption = .w7
     @Published private var defaultArrowColor: CodableColor = .accentPink
@@ -36,6 +36,9 @@ final class DocumentViewModel: ObservableObject {
     var commitPendingTextEditing: (() -> Void)?
 
     private var undoObservers: [NSObjectProtocol] = []
+    private var lastPastedAnnotationID: UUID?
+    private var consecutivePasteCount = 0
+    private var pastedOrigins: [CGPoint] = []
 
     var hasImage: Bool { baseImage != nil }
     var canPerformUndo: Bool { isTextEditing ? textEditingCanUndo : canUndo }
@@ -87,6 +90,7 @@ final class DocumentViewModel: ObservableObject {
         annotations = []
         selectedAnnotationID = nil
         undoManager.removeAllActions()
+        resetPasteCascade()
         refreshUndoAvailability()
         lastErrorMessage = nil
     }
@@ -113,6 +117,7 @@ final class DocumentViewModel: ObservableObject {
         annotations = []
         selectedAnnotationID = nil
         undoManager.removeAllActions()
+        resetPasteCascade()
         refreshUndoAvailability()
         lastErrorMessage = nil
         return true
@@ -205,6 +210,31 @@ final class DocumentViewModel: ObservableObject {
         }
     }
 
+    func performCopyCommand() {
+        if let textView = NSApp.keyWindow?.firstResponder as? NSTextView {
+            textView.copy(nil)
+        } else if selectedAnnotation != nil {
+            copySelectedAnnotationToPasteboard()
+        } else {
+            copyResultToPasteboard()
+        }
+    }
+
+    func performPasteCommand() {
+        if let textView = NSApp.keyWindow?.firstResponder as? NSTextView {
+            textView.paste(nil)
+            return
+        }
+
+        let pasteboard = NSPasteboard.general
+        if let data = pasteboard.data(forType: .kakikomiAnnotation) {
+            guard hasImage else { return }
+            pasteAnnotationData(data)
+        } else {
+            openImageFromPasteboard()
+        }
+    }
+
     func updateTextEditingUndoState(isActive: Bool, canUndo: Bool = false, canRedo: Bool = false) {
         isTextEditing = isActive
         textEditingCanUndo = isActive && canUndo
@@ -271,6 +301,15 @@ final class DocumentViewModel: ObservableObject {
         selectedArrow?.color.nsColor ?? defaultArrowColor.nsColor
     }
 
+    var commonAnnotationColor: NSColor {
+        switch selectedAnnotation {
+        case .some(.text(let text)): return text.fillColor.nsColor
+        case .some(.arrow(let arrow)): return arrow.color.nsColor
+        case nil:
+            return (activeTool == .arrow ? defaultArrowColor : defaultTextFillColor).nsColor
+        }
+    }
+
     func setTextFillColor(_ color: NSColor) {
         let value = CodableColor(color)
         if !updateSelectedText(actionName: "文字色を変更", { $0.fillColor = value }) {
@@ -310,6 +349,97 @@ final class DocumentViewModel: ObservableObject {
         arrow.color = value
         annotations[index] = .arrow(arrow)
         commitSnapshot(before, actionName: "矢印色を変更")
+    }
+
+    func setCommonAnnotationColor(_ color: NSColor) {
+        let value = CodableColor(color)
+        switch selectedAnnotation {
+        case .some(.text(_)):
+            updateSelectedText(actionName: "色を変更") {
+                $0.fillColor = value
+                $0.outlineColor = value.automaticOutlineColor
+            }
+        case .some(.arrow(_)):
+            setArrowColor(color)
+        case nil:
+            defaultTextFillColor = value
+            defaultTextOutlineColor = value.automaticOutlineColor
+            defaultArrowColor = value
+        }
+    }
+
+    func copySelectedAnnotationToPasteboard() {
+        guard let annotation = selectedAnnotation else { return }
+        do {
+            try PasteboardService.copy(annotation: annotation)
+            resetPasteCascade()
+            statusMessage = "注釈をクリップボードにコピーしました"
+        } catch {
+            lastErrorMessage = error.localizedDescription
+        }
+    }
+
+    @discardableResult
+    func pasteAnnotationData(_ data: Data) -> UUID? {
+        guard hasImage else { return nil }
+        do {
+            let annotation = try JSONDecoder().decode(AnnotationItem.self, from: data)
+            let count: Int
+            if lastPastedAnnotationID == annotation.id {
+                consecutivePasteCount += 1
+                count = consecutivePasteCount
+            } else {
+                lastPastedAnnotationID = annotation.id
+                consecutivePasteCount = 1
+                pastedOrigins = [annotation.frame.origin]
+                count = 1
+            }
+            let offset = cascadeOffset(for: annotation, count: count)
+            let pastedID = appendDuplicate(of: annotation,
+                                           offset: offset,
+                                           actionName: "ペースト")
+            if let pastedID,
+               let pasted = annotations.first(where: { $0.id == pastedID }) {
+                pastedOrigins.append(pasted.frame.origin)
+            }
+            return pastedID
+        } catch {
+            lastErrorMessage = "コピーした注釈を読み込めませんでした。"
+            return nil
+        }
+    }
+
+    func duplicateSelectedAnnotation() {
+        commitPendingTextEditing?()
+        guard let annotation = selectedAnnotation else { return }
+        appendDuplicate(of: annotation,
+                        offset: CGSize(width: 16, height: 16),
+                        actionName: "複製")
+    }
+
+    @discardableResult
+    func appendDuplicate(
+        of annotation: AnnotationItem,
+        offset: CGSize,
+        actionName: String,
+        registeringUndo: Bool = true
+    ) -> UUID? {
+        guard hasImage else { return nil }
+        let before = annotations
+        var duplicate = annotation.duplicated(offset: offset)
+        duplicate = clampedToImage(duplicate)
+        annotations.append(duplicate)
+        selectedAnnotationID = duplicate.id
+        activeTool = .select
+        if registeringUndo {
+            commitSnapshot(before, actionName: actionName)
+        }
+        return duplicate.id
+    }
+
+    private var selectedAnnotation: AnnotationItem? {
+        guard let id = selectedAnnotationID else { return nil }
+        return annotations.first { $0.id == id }
     }
 
     private var selectedText: TextAnnotation? {
@@ -357,5 +487,57 @@ final class DocumentViewModel: ObservableObject {
     private func refreshUndoAvailability() {
         canUndo = undoManager.canUndo
         canRedo = undoManager.canRedo
+    }
+
+    private func clampedToImage(_ annotation: AnnotationItem) -> AnnotationItem {
+        guard let image = baseImage else { return annotation }
+        let origin = annotation.frame.origin
+        let maximumX = max(CGFloat(image.width) - 1, 0)
+        let maximumY = max(CGFloat(image.height) - 1, 0)
+        let target = CGPoint(x: min(max(origin.x, 0), maximumX),
+                             y: min(max(origin.y, 0), maximumY))
+        var clamped = annotation
+        clamped.translate(by: CGSize(width: target.x - origin.x,
+                                     height: target.y - origin.y))
+        return clamped
+    }
+
+    private func resetPasteCascade() {
+        lastPastedAnnotationID = nil
+        consecutivePasteCount = 0
+        pastedOrigins = []
+    }
+
+    private func cascadeOffset(for annotation: AnnotationItem, count: Int) -> CGSize {
+        guard let image = baseImage else { return .zero }
+        let origin = annotation.frame.origin
+        let maximumX = max(CGFloat(image.width) - 1, 0)
+        let maximumY = max(CGFloat(image.height) - 1, 0)
+        let directions: [CGSize] = [
+            CGSize(width: 1, height: 1),
+            CGSize(width: -1, height: -1),
+            CGSize(width: 1, height: -1),
+            CGSize(width: -1, height: 1),
+            CGSize(width: 1, height: 0),
+            CGSize(width: 0, height: 1),
+            CGSize(width: -1, height: 0),
+            CGSize(width: 0, height: -1)
+        ]
+
+        for radius in count...(count + 64) {
+            for direction in directions {
+                let distance = CGFloat(radius) * 16
+                let target = CGPoint(
+                    x: min(max(origin.x + direction.width * distance, 0), maximumX),
+                    y: min(max(origin.y + direction.height * distance, 0), maximumY)
+                )
+                if !pastedOrigins.contains(target) {
+                    return CGSize(width: target.x - origin.x,
+                                  height: target.y - origin.y)
+                }
+            }
+        }
+
+        return .zero
     }
 }

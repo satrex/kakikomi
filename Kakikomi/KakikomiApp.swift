@@ -18,16 +18,24 @@ struct KakikomiApp: App {
             }
 
             CommandGroup(replacing: .pasteboard) {
-                Button("結果画像をコピー") {
-                    document.copyResultToPasteboard()
+                Button("コピー") {
+                    document.performCopyCommand()
                 }
                 .keyboardShortcut("c")
                 .disabled(!document.hasImage)
 
-                Button("クリップボードから画像を開く") {
-                    document.openImageFromPasteboard()
+                Button("ペースト") {
+                    document.performPasteCommand()
                 }
                 .keyboardShortcut("v")
+
+                Divider()
+
+                Button("複製") {
+                    document.duplicateSelectedAnnotation()
+                }
+                .keyboardShortcut("d")
+                .disabled(!document.hasImage || document.selectedAnnotationID == nil)
             }
 
             CommandGroup(after: .saveItem) {
