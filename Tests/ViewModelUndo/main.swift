@@ -9,6 +9,27 @@ private func check(_ condition: @autoclosure () -> Bool, _ message: String) {
 }
 
 Task { @MainActor in
+    let pendingDocument = DocumentViewModel()
+    let pendingID = pendingDocument.addText(at: CGPoint(x: 10, y: 10))
+    var commitHookCallCount = 0
+    pendingDocument.commitPendingTextEditing = {
+        commitHookCallCount += 1
+        pendingDocument.setText("保存直前の入力", for: pendingID)
+    }
+    pendingDocument.saveToPictures()
+    check(commitHookCallCount == 1, "save invokes pending text editing commit hook")
+    if case .text(let text) = pendingDocument.annotations[0] {
+        check(text.text == "保存直前の入力", "pending text is reflected before export")
+    }
+
+    let emptyPendingDocument = DocumentViewModel()
+    let emptyPendingID = emptyPendingDocument.addText(at: CGPoint(x: 10, y: 10))
+    emptyPendingDocument.commitPendingTextEditing = {
+        emptyPendingDocument.setText("   ", for: emptyPendingID)
+    }
+    emptyPendingDocument.copyResultToPasteboard()
+    check(emptyPendingDocument.annotations.isEmpty, "empty pending text is discarded before export")
+
     let document = DocumentViewModel()
 
     let placementBefore = document.annotations

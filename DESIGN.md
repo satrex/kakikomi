@@ -219,7 +219,7 @@ Sandbox 下でも entitlement でピクチャフォルダへ保存パネルな�
 ```xml
 <!-- Kakikomi.entitlements -->
 <key>com.apple.security.app-sandbox</key><true/>
-<key>com.apple.security.files.pictures.read-write</key><true/>
+<key>com.apple.security.assets.pictures.read-write</key><true/>
 <key>com.apple.security.files.user-selected.read-write</key><true/>
 ```
 

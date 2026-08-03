@@ -26,10 +26,43 @@ final class DocumentViewModel: ObservableObject {
     @Published private var defaultTextOutlineColor: CodableColor = .darkOutline
     @Published private var defaultOutlineRatio: CGFloat = 0.12
     @Published private var defaultFontWeight: FontWeightOption = .w7
-    @Published private var defaultArrowColor: CodableColor = .skitchPink
+    @Published private var defaultArrowColor: CodableColor = .accentPink
+    @Published private(set) var canUndo = false
+    @Published private(set) var canRedo = false
+    @Published private(set) var isTextEditing = false
+    @Published private(set) var textEditingCanUndo = false
+    @Published private(set) var textEditingCanRedo = false
     let undoManager = UndoManager()
+    var commitPendingTextEditing: (() -> Void)?
+
+    private var undoObservers: [NSObjectProtocol] = []
 
     var hasImage: Bool { baseImage != nil }
+    var canPerformUndo: Bool { isTextEditing ? textEditingCanUndo : canUndo }
+    var canPerformRedo: Bool { isTextEditing ? textEditingCanRedo : canRedo }
+
+    init() {
+        let center = NotificationCenter.default
+        let names: [Notification.Name] = [
+            .NSUndoManagerCheckpoint,
+            .NSUndoManagerDidCloseUndoGroup,
+            .NSUndoManagerDidUndoChange,
+            .NSUndoManagerDidRedoChange
+        ]
+        undoObservers = names.map { name in
+            center.addObserver(forName: name, object: undoManager, queue: .main) { [weak self] _ in
+                Task { @MainActor [weak self] in
+                    self?.refreshUndoAvailability()
+                }
+            }
+        }
+    }
+
+    deinit {
+        for observer in undoObservers {
+            NotificationCenter.default.removeObserver(observer)
+        }
+    }
 
     func presentOpenPanel() {
         let panel = NSOpenPanel()
@@ -54,6 +87,7 @@ final class DocumentViewModel: ObservableObject {
         annotations = []
         selectedAnnotationID = nil
         undoManager.removeAllActions()
+        refreshUndoAvailability()
         lastErrorMessage = nil
     }
 
@@ -79,6 +113,7 @@ final class DocumentViewModel: ObservableObject {
         annotations = []
         selectedAnnotationID = nil
         undoManager.removeAllActions()
+        refreshUndoAvailability()
         lastErrorMessage = nil
         return true
     }
@@ -141,17 +176,43 @@ final class DocumentViewModel: ObservableObject {
             target.restoreSnapshot(before, actionName: actionName)
         }
         undoManager.setActionName(actionName)
+        refreshUndoAvailability()
     }
 
     func undo() {
         undoManager.undo()
+        refreshUndoAvailability()
     }
 
     func redo() {
         undoManager.redo()
+        refreshUndoAvailability()
+    }
+
+    func performUndoCommand() {
+        if let textView = NSApp.keyWindow?.firstResponder as? NSTextView {
+            textView.undoManager?.undo()
+        } else {
+            undo()
+        }
+    }
+
+    func performRedoCommand() {
+        if let textView = NSApp.keyWindow?.firstResponder as? NSTextView {
+            textView.undoManager?.redo()
+        } else {
+            redo()
+        }
+    }
+
+    func updateTextEditingUndoState(isActive: Bool, canUndo: Bool = false, canRedo: Bool = false) {
+        isTextEditing = isActive
+        textEditingCanUndo = isActive && canUndo
+        textEditingCanRedo = isActive && canRedo
     }
 
     func saveToPictures() {
+        commitPendingTextEditing?()
         guard let image = baseImage else { return }
         do {
             let url = try PicturesSaver.save(image: image, annotations: annotations)
@@ -162,6 +223,7 @@ final class DocumentViewModel: ObservableObject {
     }
 
     func copyResultToPasteboard() {
+        commitPendingTextEditing?()
         guard let image = baseImage else { return }
         do {
             try PasteboardService.copy(image: image, annotations: annotations)
@@ -172,6 +234,7 @@ final class DocumentViewModel: ObservableObject {
     }
 
     func saveAs() {
+        commitPendingTextEditing?()
         guard let image = baseImage else { return }
         let panel = NSSavePanel()
         panel.title = "結果画像を別名で保存"
@@ -288,5 +351,11 @@ final class DocumentViewModel: ObservableObject {
         if let id = selectedAnnotationID, !annotations.contains(where: { $0.id == id }) {
             selectedAnnotationID = nil
         }
+        refreshUndoAvailability()
+    }
+
+    private func refreshUndoAvailability() {
+        canUndo = undoManager.canUndo
+        canRedo = undoManager.canRedo
     }
 }

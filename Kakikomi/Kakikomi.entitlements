@@ -4,9 +4,6 @@
 <dict>
     <key>com.apple.security.app-sandbox</key>
     <true/>
-    <key>com.apple.security.files.pictures.read-write</key>
-    <true/>
-    <!-- Apple's recognized standard-folder entitlement. The files.* key above is retained verbatim from DESIGN.md. -->
     <key>com.apple.security.assets.pictures.read-write</key>
     <true/>
     <key>com.apple.security.files.user-selected.read-write</key>

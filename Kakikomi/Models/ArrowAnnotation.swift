@@ -5,7 +5,7 @@ struct ArrowAnnotation: Annotation {
     var id = UUID()
     var start: CGPoint
     var end: CGPoint
-    var color: CodableColor = .skitchPink
+    var color: CodableColor = .accentPink
     var lineWidth: CGFloat = 12
 
     var frame: CGRect {

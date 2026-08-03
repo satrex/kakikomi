@@ -27,5 +27,5 @@ struct CodableColor: Codable, Equatable, Sendable {
 
     static let white = CodableColor(red: 1, green: 1, blue: 1)
     static let darkOutline = CodableColor(red: CGFloat(0x1A) / 255, green: CGFloat(0x1A) / 255, blue: CGFloat(0x1A) / 255)
-    static let skitchPink = CodableColor(red: 1, green: CGFloat(0x3B) / 255, blue: CGFloat(0x7B) / 255)
+    static let accentPink = CodableColor(red: 1, green: CGFloat(0x3B) / 255, blue: CGFloat(0x7B) / 255)
 }

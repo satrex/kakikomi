@@ -25,7 +25,13 @@ final class CanvasView: NSView {
     }
 
     weak var document: DocumentViewModel? {
-        didSet { observeDocument() }
+        didSet {
+            oldValue?.commitPendingTextEditing = nil
+            document?.commitPendingTextEditing = { [weak self] in
+                self?.commitTextEditing()
+            }
+            observeDocument()
+        }
     }
 
     private var cancellable: AnyCancellable?
@@ -185,8 +191,8 @@ final class CanvasView: NSView {
               let startPoint = dragStartPoint,
               let originals = dragStartAnnotations,
               let original = originals.first(where: { $0.id == selectedID }),
-              let index = document.annotationIndex(id: selectedID),
-              let currentPoint = imagePoint(from: convert(event.locationInWindow, from: nil), image: image) else { return }
+              let index = document.annotationIndex(id: selectedID) else { return }
+        let currentPoint = clampedImagePoint(from: convert(event.locationInWindow, from: nil), image: image)
         var moved = original
         moved.translate(by: CGSize(width: currentPoint.x - startPoint.x,
                                    height: currentPoint.y - startPoint.y))
@@ -264,6 +270,15 @@ final class CanvasView: NSView {
                        y: (viewPoint.y - rect.minY) / scale)
     }
 
+    private func clampedImagePoint(from viewPoint: CGPoint, image: CGImage) -> CGPoint {
+        let rect = fittedImageRect(for: image)
+        let scale = rect.width / CGFloat(image.width)
+        let clamped = CGPoint(x: min(max(viewPoint.x, rect.minX), rect.maxX),
+                              y: min(max(viewPoint.y, rect.minY), rect.maxY))
+        return CGPoint(x: (clamped.x - rect.minX) / scale,
+                       y: (clamped.y - rect.minY) / scale)
+    }
+
     private func viewRect(from imageRect: CGRect, image: CGImage) -> CGRect {
         let fitted = fittedImageRect(for: image)
         let scale = fitted.width / CGFloat(image.width)
@@ -330,12 +345,17 @@ final class CanvasView: NSView {
         editor.drawsBackground = true
         editor.isRichText = false
         editor.isVerticallyResizable = true
+        editor.allowsUndo = true
         editor.textContainerInset = CGSize(width: 4, height: 4)
         editor.onCommit = { [weak self] in self?.commitTextEditing() }
+        editor.onUndoAvailabilityChange = { [weak document] canUndo, canRedo in
+            document?.updateTextEditingUndoState(isActive: true, canUndo: canUndo, canRedo: canRedo)
+        }
         addSubview(editor)
         editingAnnotationID = id
         editingStartSnapshot = startSnapshot
         textEditor = editor
+        document.updateTextEditingUndoState(isActive: true)
         window?.makeFirstResponder(editor)
         editor.selectAll(nil)
     }
@@ -344,10 +364,14 @@ final class CanvasView: NSView {
         guard let id = editingAnnotationID else { return }
         let value = textEditor?.string ?? ""
         let snapshot = editingStartSnapshot
-        textEditor?.removeFromSuperview()
+        let editor = textEditor
         textEditor = nil
         editingAnnotationID = nil
         editingStartSnapshot = nil
+        editor?.onCommit = nil
+        editor?.onUndoAvailabilityChange = nil
+        editor?.removeFromSuperview()
+        document?.updateTextEditingUndoState(isActive: false)
         document?.setText(value, for: id)
         if let snapshot {
             document?.commitSnapshot(snapshot, actionName: "テキストを編集")
@@ -388,8 +412,8 @@ final class CanvasView: NSView {
     private func resizeText(using state: TextResizeState, event: NSEvent) {
         guard let document,
               let image = document.baseImage,
-              let point = imagePoint(from: convert(event.locationInWindow, from: nil), image: image),
               let index = document.annotationIndex(id: state.annotationID) else { return }
+        let point = clampedImagePoint(from: convert(event.locationInWindow, from: nil), image: image)
         let distance = hypot(point.x - state.anchor.x, point.y - state.anchor.y)
         var resized = state.original
         resized.fontSize = min(max(state.original.fontSize * distance / state.initialDistance, 8), 400)
@@ -444,9 +468,9 @@ final class CanvasView: NSView {
     private func updateArrowEndpoint(id: UUID, event: NSEvent) {
         guard let document,
               let image = document.baseImage,
-              let point = imagePoint(from: convert(event.locationInWindow, from: nil), image: image),
               let index = document.annotationIndex(id: id),
               case .arrow(var arrow) = document.annotations[index] else { return }
+        let point = clampedImagePoint(from: convert(event.locationInWindow, from: nil), image: image)
         arrow.end = point
         document.annotations[index] = .arrow(arrow)
     }
@@ -454,9 +478,9 @@ final class CanvasView: NSView {
     private func resizeArrow(using state: ArrowResizeState, event: NSEvent) {
         guard let document,
               let image = document.baseImage,
-              let point = imagePoint(from: convert(event.locationInWindow, from: nil), image: image),
               let index = document.annotationIndex(id: state.annotationID),
               case .arrow(var arrow) = document.annotations[index] else { return }
+        let point = clampedImagePoint(from: convert(event.locationInWindow, from: nil), image: image)
         switch state.endpoint {
         case .start: arrow.start = point
         case .end: arrow.end = point

@@ -37,12 +37,12 @@ struct KakikomiApp: App {
             }
 
             CommandGroup(replacing: .undoRedo) {
-                Button("取り消す") { document.undo() }
+                Button("取り消す") { document.performUndoCommand() }
                     .keyboardShortcut("z")
-                    .disabled(!document.undoManager.canUndo)
-                Button("やり直す") { document.redo() }
+                    .disabled(!document.canPerformUndo)
+                Button("やり直す") { document.performRedoCommand() }
                     .keyboardShortcut("z", modifiers: [.command, .shift])
-                    .disabled(!document.undoManager.canRedo)
+                    .disabled(!document.canPerformRedo)
             }
         }
     }
