@@ -1,0 +1,91 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {};
+	objectVersion = 60;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		A10000000000000000000001 /* KakikomiApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000000000000000000001 /* KakikomiApp.swift */; };
+		A10000000000000000000002 /* DocumentViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000000000000000000002 /* DocumentViewModel.swift */; };
+		A10000000000000000000003 /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000000000000000000003 /* ContentView.swift */; };
+		A10000000000000000000004 /* CanvasRepresentable.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000000000000000000004 /* CanvasRepresentable.swift */; };
+		A10000000000000000000005 /* CanvasView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000000000000000000005 /* CanvasView.swift */; };
+		A10000000000000000000008 /* CodableColor.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000000000000000000008 /* CodableColor.swift */; };
+		A10000000000000000000009 /* Annotation.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000000000000000000009 /* Annotation.swift */; };
+		A1000000000000000000000A /* TextAnnotation.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2000000000000000000000A /* TextAnnotation.swift */; };
+		A1000000000000000000000B /* AnnotationRenderer.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2000000000000000000000B /* AnnotationRenderer.swift */; };
+		A1000000000000000000000C /* TextEditingOverlay.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2000000000000000000000C /* TextEditingOverlay.swift */; };
+		A1000000000000000000000D /* ArrowAnnotation.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2000000000000000000000D /* ArrowAnnotation.swift */; };
+		A1000000000000000000000E /* ImageExporter.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2000000000000000000000E /* ImageExporter.swift */; };
+		A1000000000000000000000F /* PicturesSaver.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2000000000000000000000F /* PicturesSaver.swift */; };
+		A10000000000000000000010 /* PasteboardService.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000000000000000000010 /* PasteboardService.swift */; };
+		A10000000000000000000011 /* DragExportView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000000000000000000011 /* DragExportView.swift */; };
+		A10000000000000000000012 /* InspectorView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000000000000000000012 /* InspectorView.swift */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXFileReference section */
+		A20000000000000000000001 /* KakikomiApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KakikomiApp.swift; sourceTree = "<group>"; };
+		A20000000000000000000002 /* DocumentViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DocumentViewModel.swift; sourceTree = "<group>"; };
+		A20000000000000000000003 /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
+		A20000000000000000000004 /* CanvasRepresentable.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CanvasRepresentable.swift; sourceTree = "<group>"; };
+		A20000000000000000000005 /* CanvasView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CanvasView.swift; sourceTree = "<group>"; };
+		A20000000000000000000006 /* Kakikomi.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = Kakikomi.entitlements; sourceTree = "<group>"; };
+		A20000000000000000000007 /* Kakikomi.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Kakikomi.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		A20000000000000000000008 /* CodableColor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CodableColor.swift; sourceTree = "<group>"; };
+		A20000000000000000000009 /* Annotation.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Annotation.swift; sourceTree = "<group>"; };
+		A2000000000000000000000A /* TextAnnotation.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TextAnnotation.swift; sourceTree = "<group>"; };
+		A2000000000000000000000B /* AnnotationRenderer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AnnotationRenderer.swift; sourceTree = "<group>"; };
+		A2000000000000000000000C /* TextEditingOverlay.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TextEditingOverlay.swift; sourceTree = "<group>"; };
+		A2000000000000000000000D /* ArrowAnnotation.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ArrowAnnotation.swift; sourceTree = "<group>"; };
+		A2000000000000000000000E /* ImageExporter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ImageExporter.swift; sourceTree = "<group>"; };
+		A2000000000000000000000F /* PicturesSaver.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PicturesSaver.swift; sourceTree = "<group>"; };
+		A20000000000000000000010 /* PasteboardService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PasteboardService.swift; sourceTree = "<group>"; };
+		A20000000000000000000011 /* DragExportView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DragExportView.swift; sourceTree = "<group>"; };
+		A20000000000000000000012 /* InspectorView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InspectorView.swift; sourceTree = "<group>"; };
+/* End PBXFileReference section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		A30000000000000000000001 /* Frameworks */ = {isa = PBXFrameworksBuildPhase; buildActionMask = 2147483647; files = (); runOnlyForDeploymentPostprocessing = 0; };
+/* End PBXFrameworksBuildPhase section */
+
+/* Begin PBXGroup section */
+		A40000000000000000000001 = {isa = PBXGroup; children = (A40000000000000000000002 /* Kakikomi */, A40000000000000000000006 /* Products */); sourceTree = "<group>"; };
+		A40000000000000000000002 /* Kakikomi */ = {isa = PBXGroup; children = (A20000000000000000000001 /* KakikomiApp.swift */, A40000000000000000000003 /* ViewModels */, A40000000000000000000004 /* Views */, A40000000000000000000005 /* Models */, A40000000000000000000007 /* Services */, A20000000000000000000006 /* Kakikomi.entitlements */); path = Kakikomi; sourceTree = "<group>"; };
+		A40000000000000000000003 /* ViewModels */ = {isa = PBXGroup; children = (A20000000000000000000002 /* DocumentViewModel.swift */); path = ViewModels; sourceTree = "<group>"; };
+		A40000000000000000000004 /* Views */ = {isa = PBXGroup; children = (A20000000000000000000003 /* ContentView.swift */, A20000000000000000000004 /* CanvasRepresentable.swift */, A20000000000000000000005 /* CanvasView.swift */, A2000000000000000000000C /* TextEditingOverlay.swift */, A20000000000000000000011 /* DragExportView.swift */, A20000000000000000000012 /* InspectorView.swift */); path = Views; sourceTree = "<group>"; };
+		A40000000000000000000005 /* Models */ = {isa = PBXGroup; children = (A20000000000000000000009 /* Annotation.swift */, A2000000000000000000000A /* TextAnnotation.swift */, A2000000000000000000000D /* ArrowAnnotation.swift */, A20000000000000000000008 /* CodableColor.swift */); path = Models; sourceTree = "<group>"; };
+		A40000000000000000000006 /* Products */ = {isa = PBXGroup; children = (A20000000000000000000007 /* Kakikomi.app */); name = Products; sourceTree = "<group>"; };
+		A40000000000000000000007 /* Services */ = {isa = PBXGroup; children = (A2000000000000000000000B /* AnnotationRenderer.swift */, A2000000000000000000000E /* ImageExporter.swift */, A2000000000000000000000F /* PicturesSaver.swift */, A20000000000000000000010 /* PasteboardService.swift */); path = Services; sourceTree = "<group>"; };
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		A50000000000000000000001 /* Kakikomi */ = {isa = PBXNativeTarget; buildConfigurationList = A90000000000000000000002 /* Build configuration list for PBXNativeTarget "Kakikomi" */; buildPhases = (A60000000000000000000001 /* Sources */, A30000000000000000000001 /* Frameworks */, A70000000000000000000001 /* Resources */); buildRules = (); dependencies = (); name = Kakikomi; productName = Kakikomi; productReference = A20000000000000000000007 /* Kakikomi.app */; productType = "com.apple.product-type.application"; };
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		A80000000000000000000001 /* Project object */ = {isa = PBXProject; attributes = {BuildIndependentTargetsInParallel = 1; LastSwiftUpdateCheck = 1600; LastUpgradeCheck = 1600; TargetAttributes = {A50000000000000000000001 = {CreatedOnToolsVersion = 16.0; }; }; }; buildConfigurationList = A90000000000000000000001 /* Build configuration list for PBXProject "Kakikomi" */; compatibilityVersion = "Xcode 15.0"; developmentRegion = ja; hasScannedForEncodings = 0; knownRegions = (ja, Base); mainGroup = A40000000000000000000001; productRefGroup = A40000000000000000000006 /* Products */; projectDirPath = ""; projectRoot = ""; targets = (A50000000000000000000001 /* Kakikomi */); };
+/* End PBXProject section */
+
+/* Begin PBXResourcesBuildPhase section */
+		A70000000000000000000001 /* Resources */ = {isa = PBXResourcesBuildPhase; buildActionMask = 2147483647; files = (); runOnlyForDeploymentPostprocessing = 0; };
+/* End PBXResourcesBuildPhase section */
+
+/* Begin PBXSourcesBuildPhase section */
+		A60000000000000000000001 /* Sources */ = {isa = PBXSourcesBuildPhase; buildActionMask = 2147483647; files = (A10000000000000000000001, A10000000000000000000002, A10000000000000000000003, A10000000000000000000004, A10000000000000000000005, A10000000000000000000008, A10000000000000000000009, A1000000000000000000000A, A1000000000000000000000B, A1000000000000000000000C, A1000000000000000000000D, A1000000000000000000000E, A1000000000000000000000F, A10000000000000000000010, A10000000000000000000011, A10000000000000000000012); runOnlyForDeploymentPostprocessing = 0; };
+/* End PBXSourcesBuildPhase section */
+
+/* Begin XCBuildConfiguration section */
+		AA0000000000000000000001 /* Debug */ = {isa = XCBuildConfiguration; buildSettings = {CLANG_ENABLE_MODULES = YES; MACOSX_DEPLOYMENT_TARGET = 14.0; SDKROOT = macosx; SWIFT_VERSION = 5.0; }; name = Debug; };
+		AA0000000000000000000002 /* Release */ = {isa = XCBuildConfiguration; buildSettings = {CLANG_ENABLE_MODULES = YES; MACOSX_DEPLOYMENT_TARGET = 14.0; SDKROOT = macosx; SWIFT_VERSION = 5.0; }; name = Release; };
+		AA0000000000000000000003 /* Debug */ = {isa = XCBuildConfiguration; buildSettings = {CODE_SIGN_ENTITLEMENTS = Kakikomi/Kakikomi.entitlements; CODE_SIGN_STYLE = Automatic; COMBINE_HIDPI_IMAGES = YES; CURRENT_PROJECT_VERSION = 1; ENABLE_APP_SANDBOX = YES; ENABLE_HARDENED_RUNTIME = YES; ENABLE_RESOURCE_ACCESS_PICTURES_FOLDER = readwrite; GENERATE_INFOPLIST_FILE = YES; INFOPLIST_KEY_CFBundleDisplayName = "Kakikomi"; INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.graphics-design"; MARKETING_VERSION = 1.0; PRODUCT_BUNDLE_IDENTIFIER = jp.satrex.Kakikomi; PRODUCT_NAME = "$(TARGET_NAME)"; SWIFT_EMIT_LOC_STRINGS = YES; SWIFT_STRICT_CONCURRENCY = minimal; }; name = Debug; };
+		AA0000000000000000000004 /* Release */ = {isa = XCBuildConfiguration; buildSettings = {CODE_SIGN_ENTITLEMENTS = Kakikomi/Kakikomi.entitlements; CODE_SIGN_STYLE = Automatic; COMBINE_HIDPI_IMAGES = YES; CURRENT_PROJECT_VERSION = 1; ENABLE_APP_SANDBOX = YES; ENABLE_HARDENED_RUNTIME = YES; ENABLE_RESOURCE_ACCESS_PICTURES_FOLDER = readwrite; GENERATE_INFOPLIST_FILE = YES; INFOPLIST_KEY_CFBundleDisplayName = "Kakikomi"; INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.graphics-design"; MARKETING_VERSION = 1.0; PRODUCT_BUNDLE_IDENTIFIER = jp.satrex.Kakikomi; PRODUCT_NAME = "$(TARGET_NAME)"; SWIFT_EMIT_LOC_STRINGS = YES; SWIFT_STRICT_CONCURRENCY = minimal; }; name = Release; };
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		A90000000000000000000001 /* Build configuration list for PBXProject "Kakikomi" */ = {isa = XCConfigurationList; buildConfigurations = (AA0000000000000000000001 /* Debug */, AA0000000000000000000002 /* Release */); defaultConfigurationIsVisible = 0; defaultConfigurationName = Release; };
+		A90000000000000000000002 /* Build configuration list for PBXNativeTarget "Kakikomi" */ = {isa = XCConfigurationList; buildConfigurations = (AA0000000000000000000003 /* Debug */, AA0000000000000000000004 /* Release */); defaultConfigurationIsVisible = 0; defaultConfigurationName = Release; };
+/* End XCConfigurationList section */
+	};
+	rootObject = A80000000000000000000001 /* Project object */;
+}
