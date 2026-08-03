@@ -22,6 +22,7 @@
 		A10000000000000000000010 /* PasteboardService.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000000000000000000010 /* PasteboardService.swift */; };
 		A10000000000000000000011 /* DragExportView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000000000000000000011 /* DragExportView.swift */; };
 		A10000000000000000000012 /* InspectorView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000000000000000000012 /* InspectorView.swift */; };
+		A10000000000000000000013 /* Kakikomi.icns in Resources */ = {isa = PBXBuildFile; fileRef = A20000000000000000000013 /* Kakikomi.icns */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -43,6 +44,7 @@
 		A20000000000000000000010 /* PasteboardService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PasteboardService.swift; sourceTree = "<group>"; };
 		A20000000000000000000011 /* DragExportView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DragExportView.swift; sourceTree = "<group>"; };
 		A20000000000000000000012 /* InspectorView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InspectorView.swift; sourceTree = "<group>"; };
+		A20000000000000000000013 /* Kakikomi.icns */ = {isa = PBXFileReference; lastKnownFileType = image.icns; path = Assets/Kakikomi.icns; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -51,7 +53,7 @@
 
 /* Begin PBXGroup section */
 		A40000000000000000000001 = {isa = PBXGroup; children = (A40000000000000000000002 /* Kakikomi */, A40000000000000000000006 /* Products */); sourceTree = "<group>"; };
-		A40000000000000000000002 /* Kakikomi */ = {isa = PBXGroup; children = (A20000000000000000000001 /* KakikomiApp.swift */, A40000000000000000000003 /* ViewModels */, A40000000000000000000004 /* Views */, A40000000000000000000005 /* Models */, A40000000000000000000007 /* Services */, A20000000000000000000006 /* Kakikomi.entitlements */); path = Kakikomi; sourceTree = "<group>"; };
+		A40000000000000000000002 /* Kakikomi */ = {isa = PBXGroup; children = (A20000000000000000000001 /* KakikomiApp.swift */, A40000000000000000000003 /* ViewModels */, A40000000000000000000004 /* Views */, A40000000000000000000005 /* Models */, A40000000000000000000007 /* Services */, A20000000000000000000006 /* Kakikomi.entitlements */, A20000000000000000000013 /* Kakikomi.icns */); path = Kakikomi; sourceTree = "<group>"; };
 		A40000000000000000000003 /* ViewModels */ = {isa = PBXGroup; children = (A20000000000000000000002 /* DocumentViewModel.swift */); path = ViewModels; sourceTree = "<group>"; };
 		A40000000000000000000004 /* Views */ = {isa = PBXGroup; children = (A20000000000000000000003 /* ContentView.swift */, A20000000000000000000004 /* CanvasRepresentable.swift */, A20000000000000000000005 /* CanvasView.swift */, A2000000000000000000000C /* TextEditingOverlay.swift */, A20000000000000000000011 /* DragExportView.swift */, A20000000000000000000012 /* InspectorView.swift */); path = Views; sourceTree = "<group>"; };
 		A40000000000000000000005 /* Models */ = {isa = PBXGroup; children = (A20000000000000000000009 /* Annotation.swift */, A2000000000000000000000A /* TextAnnotation.swift */, A2000000000000000000000D /* ArrowAnnotation.swift */, A20000000000000000000008 /* CodableColor.swift */); path = Models; sourceTree = "<group>"; };
@@ -68,7 +70,7 @@
 /* End PBXProject section */
 
 /* Begin PBXResourcesBuildPhase section */
-		A70000000000000000000001 /* Resources */ = {isa = PBXResourcesBuildPhase; buildActionMask = 2147483647; files = (); runOnlyForDeploymentPostprocessing = 0; };
+		A70000000000000000000001 /* Resources */ = {isa = PBXResourcesBuildPhase; buildActionMask = 2147483647; files = (A10000000000000000000013 /* Kakikomi.icns in Resources */); runOnlyForDeploymentPostprocessing = 0; };
 /* End PBXResourcesBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */
@@ -78,8 +80,8 @@
 /* Begin XCBuildConfiguration section */
 		AA0000000000000000000001 /* Debug */ = {isa = XCBuildConfiguration; buildSettings = {CLANG_ENABLE_MODULES = YES; MACOSX_DEPLOYMENT_TARGET = 14.0; SDKROOT = macosx; SWIFT_VERSION = 5.0; }; name = Debug; };
 		AA0000000000000000000002 /* Release */ = {isa = XCBuildConfiguration; buildSettings = {CLANG_ENABLE_MODULES = YES; MACOSX_DEPLOYMENT_TARGET = 14.0; SDKROOT = macosx; SWIFT_VERSION = 5.0; }; name = Release; };
-		AA0000000000000000000003 /* Debug */ = {isa = XCBuildConfiguration; buildSettings = {CODE_SIGN_ENTITLEMENTS = Kakikomi/Kakikomi.entitlements; CODE_SIGN_STYLE = Automatic; COMBINE_HIDPI_IMAGES = YES; CURRENT_PROJECT_VERSION = 1; ENABLE_APP_SANDBOX = YES; ENABLE_HARDENED_RUNTIME = YES; ENABLE_RESOURCE_ACCESS_PICTURES_FOLDER = readwrite; GENERATE_INFOPLIST_FILE = YES; INFOPLIST_KEY_CFBundleDisplayName = "Kakikomi"; INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.graphics-design"; MARKETING_VERSION = 1.0; PRODUCT_BUNDLE_IDENTIFIER = jp.satrex.Kakikomi; PRODUCT_NAME = "$(TARGET_NAME)"; SWIFT_EMIT_LOC_STRINGS = YES; SWIFT_STRICT_CONCURRENCY = minimal; }; name = Debug; };
-		AA0000000000000000000004 /* Release */ = {isa = XCBuildConfiguration; buildSettings = {CODE_SIGN_ENTITLEMENTS = Kakikomi/Kakikomi.entitlements; CODE_SIGN_STYLE = Automatic; COMBINE_HIDPI_IMAGES = YES; CURRENT_PROJECT_VERSION = 1; ENABLE_APP_SANDBOX = YES; ENABLE_HARDENED_RUNTIME = YES; ENABLE_RESOURCE_ACCESS_PICTURES_FOLDER = readwrite; GENERATE_INFOPLIST_FILE = YES; INFOPLIST_KEY_CFBundleDisplayName = "Kakikomi"; INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.graphics-design"; MARKETING_VERSION = 1.0; PRODUCT_BUNDLE_IDENTIFIER = jp.satrex.Kakikomi; PRODUCT_NAME = "$(TARGET_NAME)"; SWIFT_EMIT_LOC_STRINGS = YES; SWIFT_STRICT_CONCURRENCY = minimal; }; name = Release; };
+		AA0000000000000000000003 /* Debug */ = {isa = XCBuildConfiguration; buildSettings = {CODE_SIGN_ENTITLEMENTS = Kakikomi/Kakikomi.entitlements; CODE_SIGN_STYLE = Automatic; COMBINE_HIDPI_IMAGES = YES; CURRENT_PROJECT_VERSION = 1; ENABLE_APP_SANDBOX = YES; ENABLE_HARDENED_RUNTIME = YES; ENABLE_RESOURCE_ACCESS_PICTURES_FOLDER = readwrite; GENERATE_INFOPLIST_FILE = NO; INFOPLIST_FILE = Kakikomi/Info.plist; MARKETING_VERSION = 1.0; PRODUCT_BUNDLE_IDENTIFIER = jp.satrex.Kakikomi; PRODUCT_NAME = "$(TARGET_NAME)"; SWIFT_EMIT_LOC_STRINGS = YES; SWIFT_STRICT_CONCURRENCY = minimal; }; name = Debug; };
+		AA0000000000000000000004 /* Release */ = {isa = XCBuildConfiguration; buildSettings = {CODE_SIGN_ENTITLEMENTS = Kakikomi/Kakikomi.entitlements; CODE_SIGN_STYLE = Automatic; COMBINE_HIDPI_IMAGES = YES; CURRENT_PROJECT_VERSION = 1; ENABLE_APP_SANDBOX = YES; ENABLE_HARDENED_RUNTIME = YES; ENABLE_RESOURCE_ACCESS_PICTURES_FOLDER = readwrite; GENERATE_INFOPLIST_FILE = NO; INFOPLIST_FILE = Kakikomi/Info.plist; MARKETING_VERSION = 1.0; PRODUCT_BUNDLE_IDENTIFIER = jp.satrex.Kakikomi; PRODUCT_NAME = "$(TARGET_NAME)"; SWIFT_EMIT_LOC_STRINGS = YES; SWIFT_STRICT_CONCURRENCY = minimal; }; name = Release; };
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
