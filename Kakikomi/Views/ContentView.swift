@@ -20,37 +20,45 @@ struct ContentView: View {
                 Button {
                     document.presentOpenPanel()
                 } label: {
-                    Label("開く", systemImage: "folder")
+                    Image(systemName: "folder")
                 }
+                .help("開く")
+                .accessibilityLabel("開く")
                 .accessibilityIdentifier("openImageButton")
 
                 Button {
                     document.performPasteCommand()
                 } label: {
-                    Label("ペースト", systemImage: "doc.on.clipboard")
+                    Image(systemName: "doc.on.clipboard")
                 }
+                .help("ペースト")
+                .accessibilityLabel("ペースト")
                 .accessibilityIdentifier("pasteImageButton")
 
                 Button {
                     Task { await document.importScreenshot() }
                 } label: {
-                    Label("画面取込", systemImage: "camera.viewfinder")
+                    Image(systemName: "camera.viewfinder")
                 }
+                .help("画面取込")
+                .accessibilityLabel("画面取込")
                 .accessibilityIdentifier("screenshotCaptureButton")
 
                 Divider().frame(height: 22)
 
                 Picker("ツール", selection: $document.activeTool) {
-                    Label("選択", systemImage: "cursorarrow").tag(Tool.select)
-                    Label("テキスト", systemImage: "textformat").tag(Tool.text)
-                    Label("矢印", systemImage: "arrow.up.right").tag(Tool.arrow)
-                    Label("矩形", systemImage: "rectangle").tag(Tool.rectangle)
-                    Label("角丸", systemImage: "app").tag(Tool.roundedRectangle)
-                    Label("楕円", systemImage: "oval").tag(Tool.ellipse)
-                    Label("モザイク", systemImage: "checkerboard.rectangle").tag(Tool.mosaic)
-                    Label("切り抜き", systemImage: "crop").tag(Tool.crop)
+                    Image(systemName: "cursorarrow").help("選択").accessibilityLabel("選択").tag(Tool.select)
+                    Image(systemName: "textformat").help("テキスト").accessibilityLabel("テキスト").tag(Tool.text)
+                    Image(systemName: "arrow.up.right").help("矢印").accessibilityLabel("矢印").tag(Tool.arrow)
+                    Image(systemName: "rectangle").help("矩形").accessibilityLabel("矩形").tag(Tool.rectangle)
+                    Image(systemName: "app").help("角丸").accessibilityLabel("角丸").tag(Tool.roundedRectangle)
+                    Image(systemName: "oval").help("楕円").accessibilityLabel("楕円").tag(Tool.ellipse)
+                    Image(systemName: "checkerboard.rectangle").help("モザイク").accessibilityLabel("モザイク").tag(Tool.mosaic)
+                    Image(systemName: "crop").help("切り抜き").accessibilityLabel("切り抜き").tag(Tool.crop)
                 }
                 .pickerStyle(.segmented)
+                .help("ツール")
+                .accessibilityLabel("ツール")
                 .disabled(!document.hasImage)
                 .accessibilityIdentifier("toolPicker")
 
@@ -69,22 +77,27 @@ struct ContentView: View {
 
                 Spacer()
 
-                Button {
-                    document.saveToPictures()
-                } label: {
-                    Label("ピクチャに保存", systemImage: "square.and.arrow.down")
-                }
-                .disabled(!document.hasImage)
-                .accessibilityIdentifier("picturesSaveButton")
+                HStack(spacing: 10) {
+                    Button {
+                        document.saveToPictures()
+                    } label: {
+                        Image(systemName: "square.and.arrow.down")
+                    }
+                    .help("ピクチャに保存")
+                    .accessibilityLabel("ピクチャに保存")
+                    .disabled(!document.hasImage)
+                    .accessibilityIdentifier("picturesSaveButton")
 
-                Button {
-                    uiMode = isDetailedMode ? UIMode.simple.rawValue : UIMode.detailed.rawValue
-                } label: {
-                    Image(systemName: "slider.horizontal.3")
+                    Button {
+                        uiMode = isDetailedMode ? UIMode.simple.rawValue : UIMode.detailed.rawValue
+                    } label: {
+                        Image(systemName: "slider.horizontal.3")
+                    }
+                    .help(isDetailedMode ? "簡易モードに切り替える" : "詳細モードに切り替える")
+                    .accessibilityLabel(isDetailedMode ? "簡易モード" : "詳細モード")
+                    .accessibilityIdentifier("uiModeToggle")
                 }
-                .help(isDetailedMode ? "簡易モードに切り替える" : "詳細モードに切り替える")
-                .accessibilityLabel(isDetailedMode ? "簡易モード" : "詳細モード")
-                .accessibilityIdentifier("uiModeToggle")
+                .fixedSize()
             }
             .buttonStyle(.bordered)
             .padding(10)
