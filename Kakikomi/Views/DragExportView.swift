@@ -1,6 +1,5 @@
 import AppKit
 import SwiftUI
-import UniformTypeIdentifiers
 
 struct DragExportView: NSViewRepresentable {
     @ObservedObject var document: DocumentViewModel
@@ -17,7 +16,7 @@ struct DragExportView: NSViewRepresentable {
     }
 }
 
-final class ExportDragSourceView: NSView, NSDraggingSource, NSFilePromiseProviderDelegate {
+final class ExportDragSourceView: NSView, NSDraggingSource {
     weak var document: DocumentViewModel?
 
     override var isFlipped: Bool { true }
@@ -39,40 +38,28 @@ final class ExportDragSourceView: NSView, NSDraggingSource, NSFilePromiseProvide
     }
 
     override func mouseDragged(with event: NSEvent) {
-        guard let document, let image = document.baseImage,
-              let data = try? ImageExporter.data(image: image, annotations: document.annotations, format: .png) else { return }
-        let provider = NSFilePromiseProvider(fileType: UTType.png.identifier, delegate: self)
-        provider.userInfo = data
-        let item = NSDraggingItem(pasteboardWriter: provider)
-        let icon = NSImage(systemSymbolName: "photo", accessibilityDescription: "結果画像")
-            ?? NSImage(size: CGSize(width: 48, height: 48))
-        item.setDraggingFrame(CGRect(origin: convert(event.locationInWindow, from: nil), size: CGSize(width: 48, height: 48)),
-                              contents: icon)
-        beginDraggingSession(with: [item], event: event, source: self)
+        guard let document, let image = document.baseImage else { return }
+        document.commitPendingTextEditing?()
+        do {
+            let exported = try DragExportService.write(image: image, annotations: document.annotations)
+            let item = NSDraggingItem(pasteboardWriter: exported.url as NSURL)
+            let thumbnail = thumbnail(for: exported.image)
+            let cursor = convert(event.locationInWindow, from: nil)
+            item.setDraggingFrame(CGRect(origin: cursor, size: thumbnail.size), contents: thumbnail)
+            beginDraggingSession(with: [item], event: event, source: self)
+        } catch {
+            document.lastErrorMessage = error.localizedDescription
+        }
     }
 
     func draggingSession(_ session: NSDraggingSession, sourceOperationMaskFor context: NSDraggingContext) -> NSDragOperation {
         .copy
     }
 
-    func filePromiseProvider(_ filePromiseProvider: NSFilePromiseProvider, fileNameForType fileType: String) -> String {
-        "注釈.png"
-    }
-
-    func filePromiseProvider(
-        _ filePromiseProvider: NSFilePromiseProvider,
-        writePromiseTo url: URL,
-        completionHandler: @escaping (Error?) -> Void
-    ) {
-        guard let data = filePromiseProvider.userInfo as? Data else {
-            completionHandler(ImageExporterError.imageCreationFailed)
-            return
-        }
-        do {
-            try data.write(to: url, options: .atomic)
-            completionHandler(nil)
-        } catch {
-            completionHandler(error)
-        }
+    private func thumbnail(for image: CGImage) -> NSImage {
+        let longestSide = max(CGFloat(image.width), CGFloat(image.height))
+        let scale = min(1, 120 / longestSide)
+        let size = CGSize(width: CGFloat(image.width) * scale, height: CGFloat(image.height) * scale)
+        return NSImage(cgImage: image, size: size)
     }
 }

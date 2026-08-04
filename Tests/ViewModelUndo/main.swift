@@ -1,5 +1,6 @@
 import AppKit
 import Foundation
+import ImageIO
 
 private func check(_ condition: @autoclosure () -> Bool, _ message: String) {
     guard condition() else {
@@ -97,6 +98,25 @@ Task { @MainActor in
         check(duplicatedArrow == expected, "arrow duplicate preserves all other parameters")
     }
 
+    let originalShape = ShapeAnnotation(kind: .roundedRectangle,
+                                        rect: CGRect(x: 20, y: 30, width: 80, height: 50),
+                                        color: .darkOutline, lineWidth: 18)
+    let duplicatedShapeItem = AnnotationItem.shape(originalShape)
+        .duplicated(offset: CGSize(width: 16, height: 16))
+    if case .shape(let duplicatedShape) = duplicatedShapeItem {
+        check(duplicatedShape.id != originalShape.id, "shape duplicate gets a new UUID")
+        check(duplicatedShape.rect.origin == CGPoint(x: 36, y: 46), "shape duplicate is offset")
+        var expected = originalShape
+        expected.id = duplicatedShape.id
+        expected.rect.origin = duplicatedShape.rect.origin
+        check(duplicatedShape == expected, "shape duplicate preserves all other parameters")
+    }
+    let shapeRoundTrip = try! JSONDecoder().decode(AnnotationItem.self,
+        from: JSONEncoder().encode(AnnotationItem.shape(originalShape)))
+    check(shapeRoundTrip == .shape(originalShape), "shape Codable round-trip")
+    check(originalShape.hitTest(CGPoint(x: 20, y: 55)), "shape outline is hittable")
+    check(!originalShape.hitTest(CGPoint(x: 60, y: 55)), "shape interior is not hittable")
+
     let pasteDocument = DocumentViewModel()
     let testImageURL = makeTestImageURL()
     pasteDocument.openImage(at: testImageURL)
@@ -124,6 +144,14 @@ Task { @MainActor in
     }
     pasteDocument.undo()
 
+    let encodedShape = try! JSONEncoder().encode(AnnotationItem.shape(originalShape))
+    pasteDocument.undoManager.beginUndoGrouping()
+    let pastedShapeID = pasteDocument.pasteAnnotationData(encodedShape)
+    pasteDocument.undoManager.endUndoGrouping()
+    check(pastedShapeID != nil && pasteDocument.annotations.count == 1, "shape is pasted")
+    pasteDocument.undo()
+    check(pasteDocument.annotations.isEmpty, "shape paste undo restores the snapshot")
+
     let pendingDocument = DocumentViewModel()
     let pendingID = pendingDocument.addText(at: CGPoint(x: 10, y: 10))
     var commitHookCallCount = 0
@@ -144,6 +172,43 @@ Task { @MainActor in
     }
     emptyPendingDocument.copyResultToPasteboard()
     check(emptyPendingDocument.annotations.isEmpty, "empty pending text is discarded before export")
+
+    let namingDirectory = FileManager.default.temporaryDirectory
+        .appendingPathComponent("kakikomi-name-test-\(UUID().uuidString)", isDirectory: true)
+    try! FileManager.default.createDirectory(at: namingDirectory, withIntermediateDirectories: true)
+    defer { try? FileManager.default.removeItem(at: namingDirectory) }
+    let exportDate = Date(timeIntervalSince1970: 1_704_067_200)
+    let firstName = PicturesSaver.annotatedPNGURL(in: namingDirectory, now: exportDate)
+    check(firstName.lastPathComponent.hasPrefix("注釈 "), "export name has annotation prefix")
+    check(firstName.pathExtension == "png", "export name has png extension")
+    try! Data().write(to: firstName)
+    let secondName = PicturesSaver.annotatedPNGURL(in: namingDirectory, now: exportDate)
+    check(secondName.lastPathComponent.hasSuffix(" 2.png"), "export name adds collision suffix")
+
+    let dragDirectory = FileManager.default.temporaryDirectory
+        .appendingPathComponent("kakikomi-drag-test-\(UUID().uuidString)", isDirectory: true)
+    defer { try? FileManager.default.removeItem(at: dragDirectory) }
+    let dragSourceURL = makeTestImageURL()
+    defer { try? FileManager.default.removeItem(at: dragSourceURL) }
+    let source = CGImageSourceCreateWithURL(dragSourceURL as CFURL, nil)!
+    let sourceImage = CGImageSourceCreateImageAtIndex(source, 0, nil)!
+    let firstDragExport = try! DragExportService.write(image: sourceImage, annotations: [], directory: dragDirectory, now: exportDate)
+    check(FileManager.default.fileExists(atPath: firstDragExport.url.path), "drag export writes PNG")
+    check(NSImage(contentsOf: firstDragExport.url) != nil, "drag export PNG is decodable")
+    let staleURL = dragDirectory.appendingPathComponent("stale.png")
+    try! Data().write(to: staleURL)
+    let secondDragExport = try! DragExportService.write(
+        image: sourceImage,
+        annotations: [],
+        directory: dragDirectory,
+        now: exportDate.addingTimeInterval(60)
+    )
+    check(!FileManager.default.fileExists(atPath: staleURL.path), "drag export cleans old files")
+    check(!FileManager.default.fileExists(atPath: firstDragExport.url.path), "drag export removes prior PNG")
+    check(FileManager.default.fileExists(atPath: secondDragExport.url.path), "drag export retains current PNG")
+    let dragPasteboard = NSPasteboard(name: .drag)
+    check((secondDragExport.url as NSURL).writableTypes(for: dragPasteboard).contains(.fileURL),
+          "drag URL writer provides the file URL pasteboard type")
 
     let document = DocumentViewModel()
 

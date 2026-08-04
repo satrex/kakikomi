@@ -22,6 +22,7 @@
 		A10000000000000000000010 /* PasteboardService.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000000000000000000010 /* PasteboardService.swift */; };
 		A10000000000000000000011 /* DragExportView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000000000000000000011 /* DragExportView.swift */; };
 		A10000000000000000000012 /* InspectorView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000000000000000000012 /* InspectorView.swift */; };
+		A10000000000000000000014 /* DragExportService.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000000000000000000014 /* DragExportService.swift */; };
 		A10000000000000000000013 /* Kakikomi.icns in Resources */ = {isa = PBXBuildFile; fileRef = A20000000000000000000013 /* Kakikomi.icns */; };
 /* End PBXBuildFile section */
 
@@ -45,6 +46,7 @@
 		A20000000000000000000011 /* DragExportView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DragExportView.swift; sourceTree = "<group>"; };
 		A20000000000000000000012 /* InspectorView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InspectorView.swift; sourceTree = "<group>"; };
 		A20000000000000000000013 /* Kakikomi.icns */ = {isa = PBXFileReference; lastKnownFileType = image.icns; path = Assets/Kakikomi.icns; sourceTree = "<group>"; };
+		A20000000000000000000014 /* DragExportService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DragExportService.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -58,7 +60,7 @@
 		A40000000000000000000004 /* Views */ = {isa = PBXGroup; children = (A20000000000000000000003 /* ContentView.swift */, A20000000000000000000004 /* CanvasRepresentable.swift */, A20000000000000000000005 /* CanvasView.swift */, A2000000000000000000000C /* TextEditingOverlay.swift */, A20000000000000000000011 /* DragExportView.swift */, A20000000000000000000012 /* InspectorView.swift */); path = Views; sourceTree = "<group>"; };
 		A40000000000000000000005 /* Models */ = {isa = PBXGroup; children = (A20000000000000000000009 /* Annotation.swift */, A2000000000000000000000A /* TextAnnotation.swift */, A2000000000000000000000D /* ArrowAnnotation.swift */, A20000000000000000000008 /* CodableColor.swift */); path = Models; sourceTree = "<group>"; };
 		A40000000000000000000006 /* Products */ = {isa = PBXGroup; children = (A20000000000000000000007 /* Kakikomi.app */); name = Products; sourceTree = "<group>"; };
-		A40000000000000000000007 /* Services */ = {isa = PBXGroup; children = (A2000000000000000000000B /* AnnotationRenderer.swift */, A2000000000000000000000E /* ImageExporter.swift */, A2000000000000000000000F /* PicturesSaver.swift */, A20000000000000000000010 /* PasteboardService.swift */); path = Services; sourceTree = "<group>"; };
+		A40000000000000000000007 /* Services */ = {isa = PBXGroup; children = (A2000000000000000000000B /* AnnotationRenderer.swift */, A2000000000000000000000E /* ImageExporter.swift */, A2000000000000000000000F /* PicturesSaver.swift */, A20000000000000000000010 /* PasteboardService.swift */, A20000000000000000000014 /* DragExportService.swift */); path = Services; sourceTree = "<group>"; };
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
@@ -74,7 +76,7 @@
 /* End PBXResourcesBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */
-		A60000000000000000000001 /* Sources */ = {isa = PBXSourcesBuildPhase; buildActionMask = 2147483647; files = (A10000000000000000000001, A10000000000000000000002, A10000000000000000000003, A10000000000000000000004, A10000000000000000000005, A10000000000000000000008, A10000000000000000000009, A1000000000000000000000A, A1000000000000000000000B, A1000000000000000000000C, A1000000000000000000000D, A1000000000000000000000E, A1000000000000000000000F, A10000000000000000000010, A10000000000000000000011, A10000000000000000000012); runOnlyForDeploymentPostprocessing = 0; };
+		A60000000000000000000001 /* Sources */ = {isa = PBXSourcesBuildPhase; buildActionMask = 2147483647; files = (A10000000000000000000001, A10000000000000000000002, A10000000000000000000003, A10000000000000000000004, A10000000000000000000005, A10000000000000000000008, A10000000000000000000009, A1000000000000000000000A, A1000000000000000000000B, A1000000000000000000000C, A1000000000000000000000D, A1000000000000000000000E, A1000000000000000000000F, A10000000000000000000010, A10000000000000000000011, A10000000000000000000012, A10000000000000000000014); runOnlyForDeploymentPostprocessing = 0; };
 /* End PBXSourcesBuildPhase section */
 
 /* Begin XCBuildConfiguration section */

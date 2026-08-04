@@ -64,6 +64,10 @@ enum ImageExporter {
         format: ExportFormat
     ) throws -> Data {
         let rendered = try render(image: image, annotations: annotations)
+        return try data(renderedImage: rendered, format: format)
+    }
+
+    static func data(renderedImage: CGImage, format: ExportFormat) throws -> Data {
         let data = NSMutableData()
         guard let destination = CGImageDestinationCreateWithData(
             data,
@@ -79,7 +83,7 @@ enum ImageExporter {
         case .jpeg(let quality):
             properties = [kCGImageDestinationLossyCompressionQuality: quality] as CFDictionary
         }
-        CGImageDestinationAddImage(destination, rendered, properties)
+        CGImageDestinationAddImage(destination, renderedImage, properties)
         guard CGImageDestinationFinalize(destination) else { throw ImageExporterError.finalizeFailed }
         return data as Data
     }

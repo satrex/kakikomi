@@ -370,3 +370,37 @@ struct ShapeAnnotation: Annotation {
 - v1.1 レビュー指摘【小】: 選択ツールで注釈を **option クリックだけ**（ドラッグ
   せず離す）すると、同位置に見えない複製が残る。矢印の「4px 未満破棄」と同じく、
   mouseUp 時に移動量ほぼゼロなら複製を破棄する
+
+---
+
+## 13. ドラッグ書き出しの改善 v1.2.1
+
+2026-08-04 のフィードバックで確定。
+
+### 問題
+
+1. ドラッグタブから**ブラウザ（LINE WORKS 等の Web アプリ）へドロップできない**。
+   現実装は `NSFilePromiseProvider`（ファイル約束）のみをペーストボードに載せるが、
+   Chromium 系のドロップ処理は実在するファイル URL しか受け付けないため
+2. ドラッグ中のアイコンが汎用の `photo` シンボルで、何を運んでいるか分からない
+
+### 対策
+
+- **実ファイル方式へ変更**: mouseDragged 開始時に注釈込み PNG を
+  `FileManager.default.temporaryDirectory/KakikomiDrag/` に書き出し、
+  その **file URL を pasteboardWriter としてドラッグ**する（promise は廃止）。
+  Finder / ブラウザ / Slack すべてが受け取れる、Skitch と同じ方式
+  - ファイル名は PicturesSaver と同じ「注釈 yyyy-MM-dd HH.mm.ss.png」形式
+    （ドロップ先にそのままの名前で現れるため）。命名ロジックは共有する
+  - ドラッグ開始のたびに KakikomiDrag ディレクトリ内の古いファイルを掃除
+    （今回書き出す分を除いて全削除でよい。temp なので消えても実害なし）
+- **ドラッグ像をサムネイルに**: 書き出した CGImage から NSImage を作り、
+  長辺 120pt 程度にアスペクト維持で縮小して `NSDraggingItem` の contents に使う。
+  ドラッグ枠はカーソル位置基準でサムネイルサイズに合わせる
+
+### 併せて直す（v1.2 レビュー指摘【小】）
+
+- option クリック破棄時の選択復帰が `originals.last` 固定で、クリックした注釈が
+  最前面でない場合に選択が別の注釈へ飛ぶ → mouseDown 時にクリック元の注釈 ID を
+  保持し、破棄時はその ID に戻す。同分岐の座標取得も `clampedImagePoint` に揃え、
+  画像端で破棄がスキップされないようにする

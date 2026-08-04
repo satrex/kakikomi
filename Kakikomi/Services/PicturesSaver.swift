@@ -17,14 +17,19 @@ enum PicturesSaver {
             appropriateFor: nil,
             create: true
         )
+        let url = annotatedPNGURL(in: pictures, now: now)
+        try ImageExporter.write(image: image, annotations: annotations, to: url, format: .png)
+        return url
+    }
+
+    static func annotatedPNGURL(in directory: URL, now: Date = Date(), fileManager: FileManager = .default) -> URL {
         let baseName = "注釈 \(formatter.string(from: now))"
-        var url = pictures.appendingPathComponent(baseName).appendingPathExtension("png")
+        var url = directory.appendingPathComponent(baseName).appendingPathExtension("png")
         var suffix = 2
-        while FileManager.default.fileExists(atPath: url.path) {
-            url = pictures.appendingPathComponent("\(baseName) \(suffix)").appendingPathExtension("png")
+        while fileManager.fileExists(atPath: url.path) {
+            url = directory.appendingPathComponent("\(baseName) \(suffix)").appendingPathExtension("png")
             suffix += 1
         }
-        try ImageExporter.write(image: image, annotations: annotations, to: url, format: .png)
         return url
     }
 }
