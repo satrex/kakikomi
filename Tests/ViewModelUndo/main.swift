@@ -117,6 +117,15 @@ Task { @MainActor in
     check(originalShape.hitTest(CGPoint(x: 20, y: 55)), "shape outline is hittable")
     check(!originalShape.hitTest(CGPoint(x: 60, y: 55)), "shape interior is not hittable")
 
+    let originalMosaic = MosaicAnnotation(rect: CGRect(x: 20, y: 30, width: 80, height: 50))
+    let duplicatedMosaic = AnnotationItem.mosaic(originalMosaic).duplicated(offset: CGSize(width: 16, height: 16))
+    if case .mosaic(let mosaic) = duplicatedMosaic {
+        check(mosaic.id != originalMosaic.id && mosaic.rect.origin == CGPoint(x: 36, y: 46), "mosaic duplicate is offset")
+    }
+    let mosaicRoundTrip = try! JSONDecoder().decode(AnnotationItem.self,
+        from: JSONEncoder().encode(AnnotationItem.mosaic(originalMosaic)))
+    check(mosaicRoundTrip == .mosaic(originalMosaic), "mosaic Codable round-trip")
+
     let pasteDocument = DocumentViewModel()
     let testImageURL = makeTestImageURL()
     pasteDocument.openImage(at: testImageURL)
@@ -151,6 +160,27 @@ Task { @MainActor in
     check(pastedShapeID != nil && pasteDocument.annotations.count == 1, "shape is pasted")
     pasteDocument.undo()
     check(pasteDocument.annotations.isEmpty, "shape paste undo restores the snapshot")
+
+    pasteDocument.annotations = [.mosaic(originalMosaic)]
+    var discardAsked = false
+    pasteDocument.confirmDiscardAnnotations = { discardAsked = true; return false }
+    check(!pasteDocument.shouldDiscardCurrentAnnotations() && discardAsked,
+          "discard guard is injectable and can cancel opening")
+    pasteDocument.confirmDiscardAnnotations = { true }
+    check(pasteDocument.shouldDiscardCurrentAnnotations(), "discard guard accepts confirmation")
+
+    let cropDocument = DocumentViewModel()
+    let cropURL = makeTestImageURL()
+    cropDocument.openImage(at: cropURL)
+    try? FileManager.default.removeItem(at: cropURL)
+    let cropTextID = cropDocument.addText(at: CGPoint(x: 40, y: 50))
+    cropDocument.setText("crop", for: cropTextID)
+    cropDocument.crop(to: CGRect(x: 20, y: 30, width: 100, height: 80))
+    check(cropDocument.baseImage?.width == 100 && cropDocument.baseImage?.height == 80, "crop changes image size")
+    check(cropDocument.annotations[0].frame.origin == CGPoint(x: 20, y: 20), "crop translates annotations")
+    cropDocument.undo()
+    check(cropDocument.baseImage?.width == 320 && cropDocument.baseImage?.height == 240, "crop undo restores image")
+    check(cropDocument.annotations[0].frame.origin == CGPoint(x: 40, y: 50), "crop undo restores annotations")
 
     let pendingDocument = DocumentViewModel()
     let pendingID = pendingDocument.addText(at: CGPoint(x: 10, y: 10))

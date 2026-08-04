@@ -31,6 +31,13 @@ struct ContentView: View {
                 }
                 .accessibilityIdentifier("pasteImageButton")
 
+                Button {
+                    Task { await document.importScreenshot() }
+                } label: {
+                    Label("画面取込", systemImage: "camera.viewfinder")
+                }
+                .accessibilityIdentifier("screenshotCaptureButton")
+
                 Divider().frame(height: 22)
 
                 Picker("ツール", selection: $document.activeTool) {
@@ -40,6 +47,8 @@ struct ContentView: View {
                     Label("矩形", systemImage: "rectangle").tag(Tool.rectangle)
                     Label("角丸", systemImage: "app").tag(Tool.roundedRectangle)
                     Label("楕円", systemImage: "oval").tag(Tool.ellipse)
+                    Label("モザイク", systemImage: "checkerboard.rectangle").tag(Tool.mosaic)
+                    Label("切り抜き", systemImage: "crop").tag(Tool.crop)
                 }
                 .pickerStyle(.segmented)
                 .disabled(!document.hasImage)

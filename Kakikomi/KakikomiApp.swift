@@ -15,6 +15,11 @@ struct KakikomiApp: App {
                     document.presentOpenPanel()
                 }
                 .keyboardShortcut("o")
+
+                Button("画面取込") {
+                    Task { await document.importScreenshot() }
+                }
+                .keyboardShortcut("n", modifiers: [.command, .shift])
             }
 
             CommandGroup(replacing: .pasteboard) {

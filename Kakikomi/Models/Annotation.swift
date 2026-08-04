@@ -8,6 +8,8 @@ enum Tool: String, Codable, CaseIterable {
     case rectangle
     case roundedRectangle
     case ellipse
+    case mosaic
+    case crop
 
     var shapeKind: ShapeKind? {
         switch self {
@@ -64,6 +66,25 @@ struct ShapeAnnotation: Annotation {
     }
 }
 
+struct MosaicAnnotation: Annotation {
+    var id = UUID()
+    var rect: CGRect { didSet { rect = rect.standardized } }
+    var blockSize: CGFloat = 16
+
+    init(id: UUID = UUID(), rect: CGRect, blockSize: CGFloat = 16) {
+        self.id = id
+        self.rect = rect.standardized
+        self.blockSize = blockSize
+    }
+
+    var frame: CGRect {
+        get { rect }
+        set { rect = newValue.standardized }
+    }
+
+    func hitTest(_ point: CGPoint) -> Bool { rect.contains(point) }
+}
+
 protocol Annotation: Identifiable, Codable, Equatable {
     var id: UUID { get }
     var frame: CGRect { get set }
@@ -74,12 +95,14 @@ enum AnnotationItem: Codable, Equatable, Identifiable {
     case text(TextAnnotation)
     case arrow(ArrowAnnotation)
     case shape(ShapeAnnotation)
+    case mosaic(MosaicAnnotation)
 
     var id: UUID {
         switch self {
         case .text(let annotation): annotation.id
         case .arrow(let annotation): annotation.id
         case .shape(let annotation): annotation.id
+        case .mosaic(let annotation): annotation.id
         }
     }
 
@@ -89,6 +112,7 @@ enum AnnotationItem: Codable, Equatable, Identifiable {
             case .text(let annotation): annotation.frame
             case .arrow(let annotation): annotation.frame
             case .shape(let annotation): annotation.frame
+            case .mosaic(let annotation): annotation.frame
             }
         }
         set {
@@ -102,6 +126,9 @@ enum AnnotationItem: Codable, Equatable, Identifiable {
             case .shape(var annotation):
                 annotation.frame = newValue
                 self = .shape(annotation)
+            case .mosaic(var annotation):
+                annotation.frame = newValue
+                self = .mosaic(annotation)
             }
         }
     }
@@ -111,6 +138,7 @@ enum AnnotationItem: Codable, Equatable, Identifiable {
         case .text(let annotation): annotation.hitTest(point)
         case .arrow(let annotation): annotation.hitTest(point)
         case .shape(let annotation): annotation.hitTest(point)
+        case .mosaic(let annotation): annotation.hitTest(point)
         }
     }
 
@@ -140,6 +168,11 @@ enum AnnotationItem: Codable, Equatable, Identifiable {
             annotation.rect.origin.x += offset.width
             annotation.rect.origin.y += offset.height
             return .shape(annotation)
+        case .mosaic(var annotation):
+            annotation.id = UUID()
+            annotation.rect.origin.x += offset.width
+            annotation.rect.origin.y += offset.height
+            return .mosaic(annotation)
         }
     }
 }

@@ -17,6 +17,12 @@ enum AnnotationRenderer {
 
         drawBaseImage(image, in: context)
         for annotation in annotations {
+            if case .mosaic(let mosaic) = annotation {
+                drawMosaic(mosaic, from: image, in: context)
+            }
+        }
+        for annotation in annotations {
+            if case .mosaic = annotation { continue }
             draw(annotation, imageHeight: CGFloat(image.height), in: context)
         }
         context.restoreGState()
@@ -30,7 +36,34 @@ enum AnnotationRenderer {
             drawArrow(arrow, in: context)
         case .shape(let shape):
             drawShape(shape, in: context)
+        case .mosaic:
+            break
         }
+    }
+
+    private static func drawMosaic(_ mosaic: MosaicAnnotation, from image: CGImage, in context: CGContext) {
+        let imageRect = CGRect(x: 0, y: 0, width: image.width, height: image.height)
+        let rect = mosaic.rect.intersection(imageRect).integral
+        guard !rect.isNull, rect.width > 0, rect.height > 0,
+              let cropped = image.cropping(to: rect) else { return }
+        let block = max(mosaic.blockSize, 1)
+        let smallWidth = max(Int(ceil(rect.width / block)), 1)
+        let smallHeight = max(Int(ceil(rect.height / block)), 1)
+        let colorSpace = image.colorSpace ?? CGColorSpace(name: CGColorSpace.sRGB)!
+        guard let small = CGContext(data: nil, width: smallWidth, height: smallHeight,
+                                    bitsPerComponent: 8, bytesPerRow: 0, space: colorSpace,
+                                    bitmapInfo: CGImageAlphaInfo.premultipliedLast.rawValue) else { return }
+        small.interpolationQuality = .high
+        small.draw(cropped, in: CGRect(x: 0, y: 0, width: smallWidth, height: smallHeight))
+        guard let pixelated = small.makeImage() else { return }
+        context.saveGState()
+        context.translateBy(x: 0, y: CGFloat(image.height))
+        context.scaleBy(x: 1, y: -1)
+        context.interpolationQuality = .none
+        let destination = CGRect(x: rect.minX, y: CGFloat(image.height) - rect.maxY,
+                                 width: rect.width, height: rect.height)
+        context.draw(pixelated, in: destination)
+        context.restoreGState()
     }
 
     private static func drawShape(_ shape: ShapeAnnotation, in context: CGContext) {

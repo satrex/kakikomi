@@ -34,6 +34,7 @@ final class DocumentViewModel: ObservableObject {
     @Published private(set) var textEditingCanRedo = false
     let undoManager = UndoManager()
     var commitPendingTextEditing: (() -> Void)?
+    var confirmDiscardAnnotations: (() -> Bool)?
 
     private var undoObservers: [NSObjectProtocol] = []
     private var lastPastedAnnotationID: UUID?
@@ -85,8 +86,12 @@ final class DocumentViewModel: ObservableObject {
             lastErrorMessage = "画像を開けませんでした。"
             return
         }
+        openImage(image, sourceURL: url)
+    }
+
+    func openImage(_ image: CGImage, sourceURL: URL? = nil) {
         baseImage = image
-        sourceURL = url
+        self.sourceURL = sourceURL
         annotations = []
         selectedAnnotationID = nil
         undoManager.removeAllActions()
@@ -96,6 +101,7 @@ final class DocumentViewModel: ObservableObject {
     }
 
     func openImageFromPasteboard() {
+        guard shouldDiscardCurrentAnnotations() else { return }
         let pasteboard = NSPasteboard.general
         if let data = pasteboard.data(forType: .png), loadImage(data: data) { return }
         if let data = pasteboard.data(forType: .tiff), loadImage(data: data) { return }
@@ -112,15 +118,41 @@ final class DocumentViewModel: ObservableObject {
               let image = CGImageSourceCreateImageAtIndex(source, 0, [
                   kCGImageSourceShouldCacheImmediately: true
               ] as CFDictionary) else { return false }
-        baseImage = image
-        sourceURL = nil
-        annotations = []
-        selectedAnnotationID = nil
-        undoManager.removeAllActions()
-        resetPasteCascade()
-        refreshUndoAvailability()
-        lastErrorMessage = nil
+        openImage(image)
         return true
+    }
+
+    func shouldDiscardCurrentAnnotations() -> Bool {
+        guard !annotations.isEmpty else { return true }
+        if let confirmDiscardAnnotations { return confirmDiscardAnnotations() }
+        let alert = NSAlert()
+        alert.messageText = "現在の書き込みを破棄して新しい画像を開きますか?"
+        alert.addButton(withTitle: "開く")
+        alert.addButton(withTitle: "キャンセル")
+        return alert.runModal() == .alertFirstButtonReturn
+    }
+
+    func crop(to proposedRect: CGRect) {
+        commitPendingTextEditing?()
+        guard let image = baseImage else { return }
+        let imageRect = CGRect(x: 0, y: 0, width: image.width, height: image.height)
+        let rect = proposedRect.standardized.intersection(imageRect).integral
+        guard !rect.isNull, rect.width >= 4, rect.height >= 4,
+              let cropped = image.cropping(to: rect) else { return }
+        let oldImage = image
+        let oldAnnotations = annotations
+        annotations = annotations.map { annotation in
+            var translated = annotation
+            translated.translate(by: CGSize(width: -rect.minX, height: -rect.minY))
+            return translated
+        }
+        baseImage = cropped
+        activeTool = .select
+        undoManager.registerUndo(withTarget: self) { target in
+            target.restoreCropSnapshot(image: oldImage, annotations: oldAnnotations)
+        }
+        undoManager.setActionName("切り抜き")
+        refreshUndoAvailability()
     }
 
     func annotationIndex(id: UUID) -> Int? {
@@ -315,12 +347,14 @@ final class DocumentViewModel: ObservableObject {
         case .some(.text(let text)): return text.fillColor.nsColor
         case .some(.arrow(let arrow)): return arrow.color.nsColor
         case .some(.shape(let shape)): return shape.color.nsColor
+        case .some(.mosaic): return defaultTextFillColor.nsColor
         case nil:
             return (activeTool == .arrow || activeTool.shapeKind != nil ? defaultArrowColor : defaultTextFillColor).nsColor
         }
     }
 
     func setTextFillColor(_ color: NSColor) {
+        if case .some(.mosaic) = selectedAnnotation { return }
         let value = CodableColor(color)
         if !updateSelectedText(actionName: "文字色を変更", { $0.fillColor = value }) {
             defaultTextFillColor = value
@@ -328,6 +362,7 @@ final class DocumentViewModel: ObservableObject {
     }
 
     func setTextOutlineColor(_ color: NSColor) {
+        if case .some(.mosaic) = selectedAnnotation { return }
         let value = CodableColor(color)
         if !updateSelectedText(actionName: "縁取り色を変更", { $0.outlineColor = value }) {
             defaultTextOutlineColor = value
@@ -335,6 +370,7 @@ final class DocumentViewModel: ObservableObject {
     }
 
     func setOutlineRatio(_ ratio: CGFloat) {
+        if case .some(.mosaic) = selectedAnnotation { return }
         let value = min(max(ratio, 0.04), 0.24)
         if !updateSelectedText(actionName: "縁取り幅を変更", { $0.outlineWidthRatio = value }) {
             defaultOutlineRatio = value
@@ -342,6 +378,7 @@ final class DocumentViewModel: ObservableObject {
     }
 
     func setFontWeight(_ weight: FontWeightOption) {
+        if case .some(.mosaic) = selectedAnnotation { return }
         if !updateSelectedText(actionName: "フォントウェイトを変更", { $0.fontName = weight.rawValue }) {
             defaultFontWeight = weight
         }
@@ -363,6 +400,8 @@ final class DocumentViewModel: ObservableObject {
             shape.color = value
             annotations[index] = .shape(shape)
             commitSnapshot(before, actionName: "図形色を変更")
+        case .mosaic:
+            break
         default:
             defaultArrowColor = value
         }
@@ -380,7 +419,10 @@ final class DocumentViewModel: ObservableObject {
             setArrowColor(color)
         case .some(.shape(_)):
             setArrowColor(color)
+        case .some(.mosaic):
+            break
         case nil:
+            guard activeTool != .mosaic else { return }
             defaultTextFillColor = value
             defaultTextOutlineColor = value.automaticOutlineColor
             defaultArrowColor = value
@@ -503,6 +545,21 @@ final class DocumentViewModel: ObservableObject {
             target.restoreSnapshot(current, actionName: actionName)
         }
         undoManager.setActionName(actionName)
+        annotations = snapshot
+        if let id = selectedAnnotationID, !annotations.contains(where: { $0.id == id }) {
+            selectedAnnotationID = nil
+        }
+        refreshUndoAvailability()
+    }
+
+    private func restoreCropSnapshot(image: CGImage, annotations snapshot: [AnnotationItem]) {
+        guard let currentImage = baseImage else { return }
+        let currentAnnotations = annotations
+        undoManager.registerUndo(withTarget: self) { target in
+            target.restoreCropSnapshot(image: currentImage, annotations: currentAnnotations)
+        }
+        undoManager.setActionName("切り抜き")
+        baseImage = image
         annotations = snapshot
         if let id = selectedAnnotationID, !annotations.contains(where: { $0.id == id }) {
             selectedAnnotationID = nil

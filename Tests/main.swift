@@ -87,6 +87,34 @@ do {
     let canvasPixels = try rgbaPixels(canvas)
     try check(annotatedPixels != canvasPixels, "renderer must rasterize annotations")
 
+    let mosaicContext = CGContext(data: nil, width: 96, height: 96, bitsPerComponent: 8,
+                                  bytesPerRow: 0, space: canvasColor,
+                                  bitmapInfo: CGImageAlphaInfo.premultipliedLast.rawValue)!
+    for y in 0..<96 { for x in 0..<96 {
+        mosaicContext.setFillColor(NSColor(calibratedRed: CGFloat(x) / 95, green: CGFloat(y) / 95,
+                                            blue: CGFloat((x + y) % 31) / 30, alpha: 1).cgColor)
+        mosaicContext.fill(CGRect(x: x, y: y, width: 1, height: 1))
+    }}
+    let mosaicBase = mosaicContext.makeImage()!
+    let mosaic = MosaicAnnotation(rect: CGRect(x: 16, y: 8, width: 64, height: 40), blockSize: 16)
+    let mosaicRendered = try ImageExporter.render(image: mosaicBase, annotations: [.mosaic(mosaic)])
+    let mosaicPixels = try rgbaPixels(mosaicRendered)
+    let basePixels = try rgbaPixels(mosaicBase)
+    let pixel = { (pixels: [UInt8], _ x: Int, _ y: Int) in Array(pixels[((y * 96 + x) * 4)..<((y * 96 + x) * 4 + 4)]) }
+    // rgbaPixels row 0 is the image bottom; these are the corresponding buffer rows.
+    try check(pixel(mosaicPixels, 32, 12) != pixel(basePixels, 32, 12),
+              "mosaic changes target pixels")
+    try check(pixel(mosaicPixels, 32, 80) == pixel(basePixels, 32, 80),
+              "mosaic must not change vertically mirrored pixels")
+    try check(pixel(mosaicPixels, 32, 12) == pixel(mosaicPixels, 33, 12),
+              "adjacent pixels in a mosaic block match")
+    let overText = TextAnnotation(text: "X", origin: CGPoint(x: 30, y: 22), fontSize: 36,
+                                  fillColor: .white, outlineColor: .darkOutline)
+    let textOverMosaic = try ImageExporter.render(image: mosaicBase, annotations: [.mosaic(mosaic), .text(overText)])
+    let textOverMosaicPixels = try rgbaPixels(textOverMosaic)
+    try check(pixel(textOverMosaicPixels, 41, 40) != pixel(mosaicPixels, 41, 40),
+              "text above mosaic remains visible")
+
     let png = try ImageExporter.data(image: canvas, annotations: items, format: .png)
     let jpeg = try ImageExporter.data(image: canvas, annotations: items, format: .jpeg(quality: 0.9))
     try check(CGImageSourceCreateWithData(png as CFData, nil) != nil, "PNG must decode")
@@ -116,6 +144,7 @@ do {
         .shape(ShapeAnnotation(kind: .rectangle, rect: CGRect(x: 70, y: 210, width: 240, height: 90))),
         .shape(ShapeAnnotation(kind: .roundedRectangle, rect: CGRect(x: 470, y: 210, width: 240, height: 90))),
         .shape(ShapeAnnotation(kind: .ellipse, rect: CGRect(x: 870, y: 210, width: 240, height: 90)))
+        ,.mosaic(MosaicAnnotation(rect: CGRect(x: 880, y: 240, width: 180, height: 50)))
     ]
     let visualPNG = try ImageExporter.data(image: visualBase, annotations: visualAnnotations, format: .png)
     try visualPNG.write(to: URL(fileURLWithPath: "/tmp/KakikomiVisualTest.png"), options: .atomic)

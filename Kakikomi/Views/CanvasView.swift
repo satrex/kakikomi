@@ -30,6 +30,12 @@ final class CanvasView: NSView {
         let originalAnnotations: [AnnotationItem]
         let anchor: CGPoint
     }
+    private struct MosaicResizeState {
+        let annotationID: UUID
+        let corner: Corner
+        let originalAnnotations: [AnnotationItem]
+        let anchor: CGPoint
+    }
 
     weak var document: DocumentViewModel? {
         didSet {
@@ -55,6 +61,10 @@ final class CanvasView: NSView {
     private var drawingArrowID: UUID?
     private var shapeResizeState: ShapeResizeState?
     private var drawingShapeID: UUID?
+    private var mosaicResizeState: MosaicResizeState?
+    private var drawingMosaicID: UUID?
+    private var cropStartPoint: CGPoint?
+    private var cropRect: CGRect?
 
     override init(frame frameRect: NSRect) {
         super.init(frame: frameRect)
@@ -90,6 +100,15 @@ final class CanvasView: NSView {
                                 destinationRect: imageRect)
         context.restoreGState()
 
+        if let cropRect {
+            context.saveGState()
+            context.setStrokeColor(NSColor.controlAccentColor.cgColor)
+            context.setLineWidth(1.5)
+            context.setLineDash(phase: 0, lengths: [6, 4])
+            context.stroke(cropRect)
+            context.restoreGState()
+        }
+
         if let id = document?.selectedAnnotationID,
            let annotation = document?.annotations.first(where: { $0.id == id }),
            id != editingAnnotationID {
@@ -102,7 +121,7 @@ final class CanvasView: NSView {
     override func resetCursorRects() {
         super.resetCursorRects()
         guard let document else { return }
-        if document.activeTool == .text || document.activeTool == .arrow || document.activeTool.shapeKind != nil {
+        if document.activeTool == .text || document.activeTool == .arrow || document.activeTool.shapeKind != nil || document.activeTool == .mosaic || document.activeTool == .crop {
             addCursorRect(bounds, cursor: document.activeTool == .text ? .iBeam : .crosshair)
             return
         }
@@ -120,6 +139,11 @@ final class CanvasView: NSView {
             addCursorRect(arrowHandleRect(arrow.start, image: image), cursor: .crosshair)
             addCursorRect(arrowHandleRect(arrow.end, image: image), cursor: .crosshair)
         case .shape:
+            for corner in Corner.allCases {
+                addCursorRect(handleRect(corner, for: annotation, image: image),
+                              cursor: diagonalCursor(for: corner))
+            }
+        case .mosaic:
             for corner in Corner.allCases {
                 addCursorRect(handleRect(corner, for: annotation, image: image),
                               cursor: diagonalCursor(for: corner))
@@ -159,6 +183,17 @@ final class CanvasView: NSView {
             drawingShapeID = id
             dragStartPoint = imagePoint
             dragStartAnnotations = before
+        case .mosaic:
+            let before = document.annotations
+            let annotation = MosaicAnnotation(rect: CGRect(origin: imagePoint, size: .zero))
+            document.annotations.append(.mosaic(annotation))
+            document.selectedAnnotationID = annotation.id
+            drawingMosaicID = annotation.id
+            dragStartPoint = imagePoint
+            dragStartAnnotations = before
+        case .crop:
+            cropStartPoint = imagePoint
+            cropRect = CGRect(origin: viewPoint, size: .zero)
         case .select:
             if let selectedID = document.selectedAnnotationID,
                let selected = document.annotations.first(where: { $0.id == selectedID }),
@@ -167,6 +202,15 @@ final class CanvasView: NSView {
                 arrowResizeState = ArrowResizeState(annotationID: selectedID,
                                                     endpoint: endpoint,
                                                     originalAnnotations: document.annotations)
+                return
+            }
+            if let selectedID = document.selectedAnnotationID,
+               let selected = document.annotations.first(where: { $0.id == selectedID }),
+               case .mosaic(let mosaic) = selected,
+               let corner = hitCorner(at: viewPoint, annotation: selected, image: image) {
+                mosaicResizeState = MosaicResizeState(annotationID: selectedID, corner: corner,
+                                                       originalAnnotations: document.annotations,
+                                                       anchor: oppositePoint(to: corner, in: mosaic.rect))
                 return
             }
             if let selectedID = document.selectedAnnotationID,
@@ -238,8 +282,23 @@ final class CanvasView: NSView {
             updateShapeRect(id: id, event: event)
             return
         }
+        if let id = drawingMosaicID {
+            updateMosaicRect(id: id, event: event)
+            return
+        }
+        if cropStartPoint != nil {
+            guard let document, let image = document.baseImage else { return }
+            let point = clampedImagePoint(from: convert(event.locationInWindow, from: nil), image: image)
+            cropRect = viewRect(from: CGRect(origin: cropStartPoint!, size: CGSize(width: point.x - cropStartPoint!.x, height: point.y - cropStartPoint!.y)).standardized, image: image)
+            needsDisplay = true
+            return
+        }
         if let shapeResizeState {
             resizeShape(using: shapeResizeState, event: event)
+            return
+        }
+        if let mosaicResizeState {
+            resizeMosaic(using: mosaicResizeState, event: event)
             return
         }
         if let resizeState {
@@ -278,10 +337,25 @@ final class CanvasView: NSView {
                 document.commitSnapshot(before, actionName: "図形を追加")
                 document.activeTool = .select
             }
+        } else if let drawingMosaicID, let document, let before = dragStartAnnotations {
+            if let index = document.annotationIndex(id: drawingMosaicID),
+               case .mosaic(let mosaic) = document.annotations[index],
+               hypot(mosaic.rect.width, mosaic.rect.height) < 4 {
+                document.removeAnnotation(id: drawingMosaicID, registeringUndo: false)
+            } else {
+                document.commitSnapshot(before, actionName: "モザイクを追加")
+                document.activeTool = .select
+            }
+        } else if let cropStartPoint, let document, let image = document.baseImage {
+            let point = clampedImagePoint(from: convert(event.locationInWindow, from: nil), image: image)
+            document.crop(to: CGRect(origin: cropStartPoint, size: CGSize(width: point.x - cropStartPoint.x, height: point.y - cropStartPoint.y)))
+            document.activeTool = .select
         } else if let arrowResizeState, let document {
             document.commitSnapshot(arrowResizeState.originalAnnotations, actionName: "矢印を編集")
         } else if let shapeResizeState, let document {
             document.commitSnapshot(shapeResizeState.originalAnnotations, actionName: "図形を変形")
+        } else if let mosaicResizeState, let document {
+            document.commitSnapshot(mosaicResizeState.originalAnnotations, actionName: "モザイクを変形")
         } else if let resizeState, let document {
             document.commitSnapshot(resizeState.originalAnnotations, actionName: "文字サイズを変更")
         } else if let originals = dragStartAnnotations, let document {
@@ -305,6 +379,10 @@ final class CanvasView: NSView {
         shapeResizeState = nil
         drawingArrowID = nil
         drawingShapeID = nil
+        drawingMosaicID = nil
+        mosaicResizeState = nil
+        cropStartPoint = nil
+        cropRect = nil
         dragStartPoint = nil
         dragStartAnnotations = nil
         dragStartAnnotation = nil
@@ -581,6 +659,23 @@ final class CanvasView: NSView {
         shape.rect = CGRect(x: state.anchor.x, y: state.anchor.y,
                             width: point.x - state.anchor.x, height: point.y - state.anchor.y).standardized
         document.annotations[index] = .shape(shape)
+    }
+
+    private func updateMosaicRect(id: UUID, event: NSEvent) {
+        guard let document, let image = document.baseImage, let start = dragStartPoint,
+              let index = document.annotationIndex(id: id), case .mosaic(var mosaic) = document.annotations[index] else { return }
+        let point = clampedImagePoint(from: convert(event.locationInWindow, from: nil), image: image)
+        mosaic.rect = CGRect(x: start.x, y: start.y, width: point.x - start.x, height: point.y - start.y).standardized
+        document.annotations[index] = .mosaic(mosaic)
+    }
+
+    private func resizeMosaic(using state: MosaicResizeState, event: NSEvent) {
+        guard let document, let image = document.baseImage,
+              let index = document.annotationIndex(id: state.annotationID), case .mosaic(var mosaic) = document.annotations[index] else { return }
+        let point = clampedImagePoint(from: convert(event.locationInWindow, from: nil), image: image)
+        mosaic.rect = CGRect(x: state.anchor.x, y: state.anchor.y,
+                             width: point.x - state.anchor.x, height: point.y - state.anchor.y).standardized
+        document.annotations[index] = .mosaic(mosaic)
     }
 
     private func resizeArrow(using state: ArrowResizeState, event: NSEvent) {

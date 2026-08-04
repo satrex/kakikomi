@@ -404,3 +404,56 @@ struct ShapeAnnotation: Annotation {
   最前面でない場合に選択が別の注釈へ飛ぶ → mouseDown 時にクリック元の注釈 ID を
   保持し、破棄時はその ID に戻す。同分岐の座標取得も `clampedImagePoint` に揃え、
   画像端で破棄がスキップされないようにする
+
+---
+
+## 14. v2 機能: モザイク / トリミング / スクリーンショット取り込み
+
+2026-08-04 打ち合わせで確定。
+
+### モザイク（ピクセレート）
+
+- `MosaicAnnotation { id, rect, blockSize: CGFloat = 16 }`。`AnnotationItem.mosaic`
+  として統合（frame/hitTest/translate/duplicated — コピー/複製系が自動で有効）
+- **描画順は特別扱い**: 元画像 → 全モザイク → その他の注釈の順。後からモザイクを
+  置いても矢印や文字は常に上に残る（Skitch 準拠）。AnnotationRenderer の
+  トップレベル draw で分配する
+- 描画方式は純 Core Graphics: rect 領域を `CGImage.cropping` で切り出し、
+  `rect.size / blockSize` の小さなコンテキストへ縮小描画 → 元サイズへ
+  `interpolationQuality = .none` で拡大描画。画面/書き出し同一コード
+- rect は元画像ピクセル座標。作成 UX は図形と同じドラッグ描画（4px 未満破棄、
+  作成後は選択ツールへ）。**ヒットテストは内部も含む**（塗り領域なので図形と逆）。
+  リサイズは図形と同じ四隅ハンドル
+- 色の概念がない: 共通色/インスペクタの色フローでは無視（no-op）。blockSize の
+  UI は設けない
+- ツール追加: モザイク（SF Symbol 目安: `mosaic` が無ければ `checkerboard.rectangle`）
+
+### トリミング（クロップ）
+
+- クロップは注釈ではなく **baseImage を破壊的に変更する操作**（Undo で復元可能）
+- ツール「切り抜き」: ドラッグで範囲指定（マーキー: 破線矩形を表示）、mouseUp で
+  **即適用**。確認ダイアログは出さない（Undo で戻せることを優先。4px 未満は無視）
+- 適用処理 `DocumentViewModel.crop(to rect:)`:
+  - rect を画像内にクランプし `CGImage.cropping(to:)`
+  - 全注釈を `-rect.origin` だけ translate（新座標系へ）。画像外に出た注釈も削除
+    しない（単に画面外になるだけ）
+  - **複合スナップショット Undo を導入**: (旧 baseImage, 旧 annotations) の対を
+    UndoManager に登録し、undo/redo で両方を復元する。既存の注釈のみの
+    スナップショット方式はそのまま（クロップだけが画像を変えるため専用経路）
+  - 適用後はクロップツールを選択ツールへ戻す
+
+### スクリーンショット取り込み
+
+- **ScreenCaptureKit の SCContentSharingPicker（macOS 14+）** を使う。システムの
+  ピッカーでウィンドウ/画面を選ぶ方式のため、画面収録権限の事前許可フローが不要で
+  Mac App Store 配布に適する。`CGWindowListCreateImage` 等の非推奨 API は使わない
+- 選択された `SCContentFilter` を `SCScreenshotManager.captureImage` に渡して
+  静止画を取得し、新しい baseImage として開く（`openImage` と同じ初期化経路）
+- **取り込み・クリップボード開きの共通ガード**: 現在注釈が1つ以上ある場合は
+  「現在の書き込みを破棄して新しい画像を開きますか?」の確認アラートを出す
+  （v1.1 で先送りした Cmd+V の確認も同じヘルパで解消する）
+- UI: ツールバー「画面取込」ボタン（両モード共通）+ ファイルメニュー項目。
+  キャプチャは非同期なので完了時に MainActor で反映。エラー/キャンセルは
+  `lastErrorMessage`（キャンセルは無言で良い）
+- 範囲指定キャプチャは実装しない: OS 標準（Cmd+Shift+Ctrl+4 → Cmd+V）に委ねる
+- 新規 Service: `ScreenshotCaptureService`。ScreenCaptureKit のリンクが必要
