@@ -41,8 +41,8 @@ struct InspectorView: View {
                 }
             }
 
-            Section("矢印") {
-                ColorPicker("矢印色", selection: Binding(
+            Section("矢印・図形") {
+                ColorPicker("矢印・図形色", selection: Binding(
                     get: { Color(nsColor: document.inspectorArrowColor) },
                     set: { document.setArrowColor(NSColor($0)) }
                 ), supportsOpacity: true)

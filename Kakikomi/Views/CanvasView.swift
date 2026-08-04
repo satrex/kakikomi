@@ -24,6 +24,13 @@ final class CanvasView: NSView {
         let originalAnnotations: [AnnotationItem]
     }
 
+    private struct ShapeResizeState {
+        let annotationID: UUID
+        let corner: Corner
+        let originalAnnotations: [AnnotationItem]
+        let anchor: CGPoint
+    }
+
     weak var document: DocumentViewModel? {
         didSet {
             oldValue?.commitPendingTextEditing = nil
@@ -38,6 +45,7 @@ final class CanvasView: NSView {
     private var dragStartPoint: CGPoint?
     private var dragStartAnnotations: [AnnotationItem]?
     private var dragStartAnnotation: AnnotationItem?
+    private var optionClickOriginalAnnotationID: UUID?
     private var dragActionName = "注釈を移動"
     private var editingAnnotationID: UUID?
     private weak var textEditor: TextEditingOverlay?
@@ -45,6 +53,8 @@ final class CanvasView: NSView {
     private var resizeState: TextResizeState?
     private var arrowResizeState: ArrowResizeState?
     private var drawingArrowID: UUID?
+    private var shapeResizeState: ShapeResizeState?
+    private var drawingShapeID: UUID?
 
     override init(frame frameRect: NSRect) {
         super.init(frame: frameRect)
@@ -92,7 +102,7 @@ final class CanvasView: NSView {
     override func resetCursorRects() {
         super.resetCursorRects()
         guard let document else { return }
-        if document.activeTool == .text || document.activeTool == .arrow {
+        if document.activeTool == .text || document.activeTool == .arrow || document.activeTool.shapeKind != nil {
             addCursorRect(bounds, cursor: document.activeTool == .text ? .iBeam : .crosshair)
             return
         }
@@ -109,6 +119,11 @@ final class CanvasView: NSView {
         case .arrow(let arrow):
             addCursorRect(arrowHandleRect(arrow.start, image: image), cursor: .crosshair)
             addCursorRect(arrowHandleRect(arrow.end, image: image), cursor: .crosshair)
+        case .shape:
+            for corner in Corner.allCases {
+                addCursorRect(handleRect(corner, for: annotation, image: image),
+                              cursor: diagonalCursor(for: corner))
+            }
         }
     }
 
@@ -137,6 +152,13 @@ final class CanvasView: NSView {
             drawingArrowID = id
             dragStartPoint = imagePoint
             dragStartAnnotations = before
+        case .rectangle, .roundedRectangle, .ellipse:
+            guard let kind = document.activeTool.shapeKind else { return }
+            let before = document.annotations
+            let id = document.addShape(kind: kind, at: imagePoint)
+            drawingShapeID = id
+            dragStartPoint = imagePoint
+            dragStartAnnotations = before
         case .select:
             if let selectedID = document.selectedAnnotationID,
                let selected = document.annotations.first(where: { $0.id == selectedID }),
@@ -145,6 +167,16 @@ final class CanvasView: NSView {
                 arrowResizeState = ArrowResizeState(annotationID: selectedID,
                                                     endpoint: endpoint,
                                                     originalAnnotations: document.annotations)
+                return
+            }
+            if let selectedID = document.selectedAnnotationID,
+               let selected = document.annotations.first(where: { $0.id == selectedID }),
+               case .shape(let shape) = selected,
+               let corner = hitCorner(at: viewPoint, annotation: selected, image: image) {
+                shapeResizeState = ShapeResizeState(annotationID: selectedID,
+                                                    corner: corner,
+                                                    originalAnnotations: document.annotations,
+                                                    anchor: oppositePoint(to: corner, in: shape.rect))
                 return
             }
             if let selectedID = document.selectedAnnotationID,
@@ -176,6 +208,7 @@ final class CanvasView: NSView {
                 dragStartPoint = imagePoint
                 dragStartAnnotations = before
                 dragStartAnnotation = duplicate
+                optionClickOriginalAnnotationID = id
                 dragActionName = "複製"
                 return
             }
@@ -199,6 +232,14 @@ final class CanvasView: NSView {
         }
         if let id = drawingArrowID {
             updateArrowEndpoint(id: id, event: event)
+            return
+        }
+        if let id = drawingShapeID {
+            updateShapeRect(id: id, event: event)
+            return
+        }
+        if let shapeResizeState {
+            resizeShape(using: shapeResizeState, event: event)
             return
         }
         if let resizeState {
@@ -228,19 +269,46 @@ final class CanvasView: NSView {
                 document.commitSnapshot(before, actionName: "矢印を追加")
                 document.activeTool = .select
             }
+        } else if let drawingShapeID, let document, let before = dragStartAnnotations {
+            if let index = document.annotationIndex(id: drawingShapeID),
+               case .shape(let shape) = document.annotations[index],
+               hypot(shape.rect.width, shape.rect.height) < 4 {
+                document.removeAnnotation(id: drawingShapeID, registeringUndo: false)
+            } else {
+                document.commitSnapshot(before, actionName: "図形を追加")
+                document.activeTool = .select
+            }
         } else if let arrowResizeState, let document {
             document.commitSnapshot(arrowResizeState.originalAnnotations, actionName: "矢印を編集")
+        } else if let shapeResizeState, let document {
+            document.commitSnapshot(shapeResizeState.originalAnnotations, actionName: "図形を変形")
         } else if let resizeState, let document {
             document.commitSnapshot(resizeState.originalAnnotations, actionName: "文字サイズを変更")
         } else if let originals = dragStartAnnotations, let document {
-            document.commitSnapshot(originals, actionName: dragActionName)
+            if dragActionName == "複製", let start = dragStartPoint,
+               let image = document.baseImage,
+               let originalID = optionClickOriginalAnnotationID,
+               let duplicate = dragStartAnnotation {
+                let current = clampedImagePoint(from: convert(event.locationInWindow, from: nil), image: image)
+                if hypot(current.x - start.x, current.y - start.y) < 4 {
+                    document.removeAnnotation(id: duplicate.id, registeringUndo: false)
+                    document.selectedAnnotationID = originalID
+                } else {
+                    document.commitSnapshot(originals, actionName: dragActionName)
+                }
+            } else {
+                document.commitSnapshot(originals, actionName: dragActionName)
+            }
         }
         resizeState = nil
         arrowResizeState = nil
+        shapeResizeState = nil
         drawingArrowID = nil
+        drawingShapeID = nil
         dragStartPoint = nil
         dragStartAnnotations = nil
         dragStartAnnotation = nil
+        optionClickOriginalAnnotationID = nil
         dragActionName = "注釈を移動"
         window?.invalidateCursorRects(for: self)
     }
@@ -494,6 +562,25 @@ final class CanvasView: NSView {
         let point = clampedImagePoint(from: convert(event.locationInWindow, from: nil), image: image)
         arrow.end = point
         document.annotations[index] = .arrow(arrow)
+    }
+
+    private func updateShapeRect(id: UUID, event: NSEvent) {
+        guard let document, let image = document.baseImage,
+              let start = dragStartPoint, let index = document.annotationIndex(id: id),
+              case .shape(var shape) = document.annotations[index] else { return }
+        let point = clampedImagePoint(from: convert(event.locationInWindow, from: nil), image: image)
+        shape.rect = CGRect(x: start.x, y: start.y, width: point.x - start.x, height: point.y - start.y).standardized
+        document.annotations[index] = .shape(shape)
+    }
+
+    private func resizeShape(using state: ShapeResizeState, event: NSEvent) {
+        guard let document, let image = document.baseImage,
+              let index = document.annotationIndex(id: state.annotationID),
+              case .shape(var shape) = document.annotations[index] else { return }
+        let point = clampedImagePoint(from: convert(event.locationInWindow, from: nil), image: image)
+        shape.rect = CGRect(x: state.anchor.x, y: state.anchor.y,
+                            width: point.x - state.anchor.x, height: point.y - state.anchor.y).standardized
+        document.annotations[index] = .shape(shape)
     }
 
     private func resizeArrow(using state: ArrowResizeState, event: NSEvent) {

@@ -155,6 +155,15 @@ final class DocumentViewModel: ObservableObject {
         return annotation.id
     }
 
+    @discardableResult
+    func addShape(kind: ShapeKind, at point: CGPoint) -> UUID {
+        let annotation = ShapeAnnotation(kind: kind, rect: CGRect(origin: point, size: .zero),
+                                         color: defaultArrowColor)
+        annotations.append(.shape(annotation))
+        selectedAnnotationID = annotation.id
+        return annotation.id
+    }
+
     func setText(_ text: String, for id: UUID) {
         guard let index = annotationIndex(id: id), case .text(var annotation) = annotations[index] else { return }
         if text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
@@ -298,15 +307,16 @@ final class DocumentViewModel: ObservableObject {
     }
 
     var inspectorArrowColor: NSColor {
-        selectedArrow?.color.nsColor ?? defaultArrowColor.nsColor
+        selectedArrow?.color.nsColor ?? selectedShape?.color.nsColor ?? defaultArrowColor.nsColor
     }
 
     var commonAnnotationColor: NSColor {
         switch selectedAnnotation {
         case .some(.text(let text)): return text.fillColor.nsColor
         case .some(.arrow(let arrow)): return arrow.color.nsColor
+        case .some(.shape(let shape)): return shape.color.nsColor
         case nil:
-            return (activeTool == .arrow ? defaultArrowColor : defaultTextFillColor).nsColor
+            return (activeTool == .arrow || activeTool.shapeKind != nil ? defaultArrowColor : defaultTextFillColor).nsColor
         }
     }
 
@@ -339,16 +349,23 @@ final class DocumentViewModel: ObservableObject {
 
     func setArrowColor(_ color: NSColor) {
         let value = CodableColor(color)
-        guard let id = selectedAnnotationID,
-              let index = annotationIndex(id: id),
-              case .arrow(var arrow) = annotations[index] else {
+        guard let id = selectedAnnotationID, let index = annotationIndex(id: id) else {
             defaultArrowColor = value
             return
         }
         let before = annotations
-        arrow.color = value
-        annotations[index] = .arrow(arrow)
-        commitSnapshot(before, actionName: "矢印色を変更")
+        switch annotations[index] {
+        case .arrow(var arrow):
+            arrow.color = value
+            annotations[index] = .arrow(arrow)
+            commitSnapshot(before, actionName: "矢印色を変更")
+        case .shape(var shape):
+            shape.color = value
+            annotations[index] = .shape(shape)
+            commitSnapshot(before, actionName: "図形色を変更")
+        default:
+            defaultArrowColor = value
+        }
     }
 
     func setCommonAnnotationColor(_ color: NSColor) {
@@ -360,6 +377,8 @@ final class DocumentViewModel: ObservableObject {
                 $0.outlineColor = value.automaticOutlineColor
             }
         case .some(.arrow(_)):
+            setArrowColor(color)
+        case .some(.shape(_)):
             setArrowColor(color)
         case nil:
             defaultTextFillColor = value
@@ -454,6 +473,13 @@ final class DocumentViewModel: ObservableObject {
               let index = annotationIndex(id: id),
               case .arrow(let arrow) = annotations[index] else { return nil }
         return arrow
+    }
+
+    private var selectedShape: ShapeAnnotation? {
+        guard let id = selectedAnnotationID,
+              let index = annotationIndex(id: id),
+              case .shape(let shape) = annotations[index] else { return nil }
+        return shape
     }
 
     @discardableResult

@@ -58,7 +58,12 @@ do {
 
     let text = TextAnnotation(text: "判読 Test", origin: CGPoint(x: 30, y: 30), fontSize: 48)
     let arrow = ArrowAnnotation(start: CGPoint(x: 25, y: 120), end: CGPoint(x: 260, y: 170))
-    let items: [AnnotationItem] = [.text(text), .arrow(arrow)]
+    let shapes: [AnnotationItem] = [
+        .shape(ShapeAnnotation(kind: .rectangle, rect: CGRect(x: 30, y: 30, width: 80, height: 55))),
+        .shape(ShapeAnnotation(kind: .roundedRectangle, rect: CGRect(x: 140, y: 35, width: 90, height: 60))),
+        .shape(ShapeAnnotation(kind: .ellipse, rect: CGRect(x: 255, y: 30, width: 70, height: 70)))
+    ]
+    let items: [AnnotationItem] = [.text(text), .arrow(arrow)] + shapes
     let encoded = try JSONEncoder().encode(items)
     let decoded = try JSONDecoder().decode([AnnotationItem].self, from: encoded)
     try check(decoded == items, "annotation value models must round-trip through Codable")
@@ -107,7 +112,10 @@ do {
     let visualAnnotations: [AnnotationItem] = [
         .text(TextAnnotation(text: "白背景でも判読", origin: CGPoint(x: 35, y: 125), fontSize: 48)),
         .text(TextAnnotation(text: "黒背景でも判読", origin: CGPoint(x: 435, y: 125), fontSize: 48)),
-        .text(TextAnnotation(text: "模様でも判読", origin: CGPoint(x: 835, y: 125), fontSize: 48))
+        .text(TextAnnotation(text: "模様でも判読", origin: CGPoint(x: 835, y: 125), fontSize: 48)),
+        .shape(ShapeAnnotation(kind: .rectangle, rect: CGRect(x: 70, y: 210, width: 240, height: 90))),
+        .shape(ShapeAnnotation(kind: .roundedRectangle, rect: CGRect(x: 470, y: 210, width: 240, height: 90))),
+        .shape(ShapeAnnotation(kind: .ellipse, rect: CGRect(x: 870, y: 210, width: 240, height: 90)))
     ]
     let visualPNG = try ImageExporter.data(image: visualBase, annotations: visualAnnotations, format: .png)
     try visualPNG.write(to: URL(fileURLWithPath: "/tmp/KakikomiVisualTest.png"), options: .atomic)

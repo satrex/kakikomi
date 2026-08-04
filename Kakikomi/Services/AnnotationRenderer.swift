@@ -28,7 +28,24 @@ enum AnnotationRenderer {
             drawOutlinedText(text, imageHeight: imageHeight, in: context)
         case .arrow(let arrow):
             drawArrow(arrow, in: context)
+        case .shape(let shape):
+            drawShape(shape, in: context)
         }
+    }
+
+    private static func drawShape(_ shape: ShapeAnnotation, in context: CGContext) {
+        context.saveGState()
+        context.setLineCap(.round)
+        context.setLineJoin(.round)
+        let path = shape.path()
+        for (color, width) in [(NSColor.white.cgColor, shape.lineWidth + 4),
+                               (shape.color.nsColor.cgColor, shape.lineWidth)] {
+            context.addPath(path)
+            context.setStrokeColor(color)
+            context.setLineWidth(width)
+            context.strokePath()
+        }
+        context.restoreGState()
     }
 
     private static func drawArrow(_ arrow: ArrowAnnotation, in context: CGContext) {

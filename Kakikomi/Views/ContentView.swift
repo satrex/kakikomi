@@ -37,9 +37,11 @@ struct ContentView: View {
                     Label("選択", systemImage: "cursorarrow").tag(Tool.select)
                     Label("テキスト", systemImage: "textformat").tag(Tool.text)
                     Label("矢印", systemImage: "arrow.up.right").tag(Tool.arrow)
+                    Label("矩形", systemImage: "rectangle").tag(Tool.rectangle)
+                    Label("角丸", systemImage: "app").tag(Tool.roundedRectangle)
+                    Label("楕円", systemImage: "oval").tag(Tool.ellipse)
                 }
                 .pickerStyle(.segmented)
-                .frame(width: 280)
                 .disabled(!document.hasImage)
                 .accessibilityIdentifier("toolPicker")
 
@@ -51,7 +53,7 @@ struct ContentView: View {
                         set: { document.setCommonAnnotationColor(NSColor($0)) }
                     ), supportsOpacity: true)
                     .labelsHidden()
-                    .help("文字と矢印の色")
+                    .help("文字・矢印・図形の色")
                     .disabled(!document.hasImage)
                     .accessibilityIdentifier("commonColorPicker")
                 }

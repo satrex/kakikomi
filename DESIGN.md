@@ -318,3 +318,55 @@ Kakikomi/
 | `.strokeWidth` 描画がフォント・サイズによって粗く見える | 縁が太い設定では CTFont → CGPath 化して `strokePath` する代替実装を Renderer 内に隠蔽（インタフェース不変） |
 | Sandbox でピクチャ保存が審査で問われる | entitlement の用途をレビューノートに明記。拒否された場合は初回のみ NSOpenPanel でピクチャを選ばせ security-scoped bookmark を保存する方式へフォールバック |
 | 巨大画像（例: 5K スクショ）での描画性能 | 表示用にダウンサンプルした CGImage をキャッシュ、書き出しのみ原寸。注釈は毎フレーム描いても軽い |
+
+---
+
+## 12. 図形注釈 v1.2: 矩形 / 角丸矩形 / 楕円
+
+2026-08-04 打ち合わせで確定。Skitch 同様「枠線のみ・塗りなし」の図形3種を追加する。
+
+### データモデル
+
+```swift
+enum ShapeKind: String, Codable { case rectangle, roundedRectangle, ellipse }
+
+struct ShapeAnnotation: Annotation {
+    var id = UUID()
+    var kind: ShapeKind
+    var rect: CGRect            // 画像ピクセル座標。常に正規化（幅・高さは正）
+    var color: CodableColor     // 既定は共通色/矢印デフォルトと同じ系統
+    var lineWidth: CGFloat      // 既定 12（矢印と同じ。UI は設けない）
+}
+```
+
+- `AnnotationItem` に `.shape(ShapeAnnotation)` ケースを追加し、`frame` /
+  `hitTest` / `translate` / `duplicated(offset:)` を実装（コピー/ペースト/
+  Cmd+D/alt ドラッグは自動的に効く）
+- 角丸半径は `min(rect の短辺 × 0.2, 32)` を描画時に計算（保存しない）
+
+### 描画（AnnotationRenderer）
+
+- 矢印と同じ**白フチ2重ストローク**: 白 `lineWidth+4` → 指定色 `lineWidth` の順に
+  同一パスを2回ストローク。塗りはしない
+- パスは rect / 角丸 rect / 楕円を画像ピクセル座標でそのまま構築
+
+### 操作
+
+- ツールは6種に拡張: 選択 / テキスト / 矢印 / 矩形 / 角丸 / 楕円
+  （SF Symbols 目安: `rectangle` / `app` / `oval`。セグメントの固定幅 280 は撤廃）
+- **作成**: 矢印と同じドラッグ描画。mouseDown で始点、ドラッグで対角、
+  4px 未満は破棄、作成後は選択ツールへ自動遷移
+- **ヒットテスト**: **枠線のみ**（内部は不感）。`CGPath.copy(strokingWithWidth:
+  max(lineWidth×2, 20), ...)` の `contains` で判定する。理由: スクリーンショットを
+  大きく囲んだ矩形の内側クリックで、別の注釈の選択や新規描画を妨げないため
+- **リサイズ**: テキストと同じ四隅ハンドル UI だが、意味は rect の変形
+  （対角アンカー固定、負サイズは正規化）。ドラッグ継続は既存クランプに乗せる
+- **色**: 簡易モードの共通色に従う。詳細モードは「矢印」セクションを
+  「矢印・図形」に改め、選択中の図形にも同じピッカーで適用
+- Undo アクション名: 「図形を追加」「図形を変形」
+
+### 既知バグの同時修正
+
+- v1.1 レビュー指摘【小】: 選択ツールで注釈を **option クリックだけ**（ドラッグ
+  せず離す）すると、同位置に見えない複製が残る。矢印の「4px 未満破棄」と同じく、
+  mouseUp 時に移動量ほぼゼロなら複製を破棄する
