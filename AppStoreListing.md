@@ -5,24 +5,30 @@ App Store Connect の各フィールドにそのまま貼り付けられる形�
 ## サポートURL（必須）
 
 ```
-https://satrex.github.io/kakikomi/
+https://kakikomi.satrex.jp/
 ```
 
 `docs/index.html`（本リポジトリ）を GitHub Pages で公開したものです。Issue へのリンクと連絡先メールを掲載しています。
 
-**公開手順**: GitHub の当リポジトリ → Settings → Pages → Source を「Deploy from a branch」、Branch を `main` / `/docs` に設定して Save。数分で `https://satrex.github.io/kakikomi/` が有効になります。
+**注意**: `satrex.github.io` には個人サイト用リポジトリがあり `blog.satrex.jp` へのカスタムドメインが設定されているため、`https://satrex.github.io/kakikomi/` はそちらへリダイレクトされてしまいます（ホスト名単位の挙動でリポジトリ側では回避不可）。そのため kakikomi 専用のサブドメイン `kakikomi.satrex.jp` を使います。
+
+**公開手順**:
+1. 当リポジトリ → Settings → Pages → Source を「Deploy from a branch」、Branch を `main` / `/docs` に設定して Save
+2. `docs/CNAME` に `kakikomi.satrex.jp` を含めてコミット済み（この状態で Settings → Pages の Custom domain 欄にも自動で反映されるはず。反映されない場合は同じ画面で手動入力）
+3. satrex.jp の DNS 管理画面で、`kakikomi` サブドメインの **CNAME レコード**を `satrex.github.io` へ向けて追加（これは Claude からはできないため、DNS 管理画面から自分で行う必要があります）
+4. DNS 反映後（数分〜最大24時間程度）、Settings → Pages の「Enforce HTTPS」にチェック
 
 ## プライバシーポリシーURL
 
 ```
-https://satrex.github.io/kakikomi/privacy.html
+https://kakikomi.satrex.jp/privacy.html
 ```
 
-同じ Pages サイト内の別ページです（`docs/privacy.html`）。上記の Pages 公開設定をすれば同時に有効になります。
+同じ Pages サイト内の別ページです（`docs/privacy.html`）。上記の公開手順が済めば同時に有効になります。
 
 ## マーケティングURL（任意）
 
-サポートURLと同じ `https://satrex.github.io/kakikomi/` を流用して問題ありません。専用のマーケティングページが欲しければ別途相談してください。
+サポートURLと同じ `https://kakikomi.satrex.jp/` を流用して問題ありません。専用のマーケティングページが欲しければ別途相談してください。
 
 ## サブタイトル（30文字以内）
 

@@ -23,8 +23,8 @@ xcodebuild -project Kakikomi.xcodeproj -scheme Kakikomi build
 
 ## サポート / プライバシーポリシー
 
-- https://satrex.github.io/kakikomi/
-- https://satrex.github.io/kakikomi/privacy.html
+- https://kakikomi.satrex.jp/
+- https://kakikomi.satrex.jp/privacy.html
 
 ## ドキュメント
 
