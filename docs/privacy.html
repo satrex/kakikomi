@@ -1,0 +1,91 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>プライバシーポリシー — Kakikomi</title>
+<style>
+  :root {
+    --bg: #f7f7f8;
+    --fg: #1a1a1a;
+    --accent: #ff3b7b;
+    --card: #ffffff;
+    --border: #e5e5e8;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #14161c;
+      --fg: #f0f0f2;
+      --card: #1c1f27;
+      --border: #2a2d36;
+    }
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    font-family: -apple-system, BlinkMacSystemFont, "Hiragino Sans", "Yu Gothic", sans-serif;
+    background: var(--bg);
+    color: var(--fg);
+    line-height: 1.8;
+  }
+  main {
+    max-width: 720px;
+    margin: 0 auto;
+    padding: 64px 24px 96px;
+  }
+  h1 { font-size: 1.6rem; }
+  h2 {
+    font-size: 1.05rem;
+    margin-top: 40px;
+    border-left: 4px solid var(--accent);
+    padding-left: 12px;
+  }
+  .card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 20px 24px;
+  }
+  a { color: var(--accent); }
+  .updated { opacity: 0.6; font-size: 0.9rem; }
+  footer { margin-top: 64px; font-size: 0.85rem; opacity: 0.6; }
+</style>
+</head>
+<body>
+<main>
+  <p><a href="index.html">&larr; Kakikomi</a></p>
+  <h1>プライバシーポリシー</h1>
+  <p class="updated">最終更新日: 2026年8月</p>
+
+  <div class="card">
+    <p><strong>Kakikomi は、ユーザーのデータを一切収集・送信・保存しません。</strong>アプリはすべての処理をお使いの Mac 上のみで完結して行い、外部サーバーとの通信機能を持ちません。</p>
+  </div>
+
+  <h2>収集する情報</h2>
+  <p>ありません。Kakikomi にはアカウント登録・ログイン・分析(アナリティクス)・広告・第三者SDKのいずれも組み込まれていません。ネットワーク通信を行う機能自体がアプリに存在しません。</p>
+
+  <h2>端末に保存される情報</h2>
+  <p>アプリの表示モード（「簡易」または「詳細」）の設定値のみを、macOS 標準の UserDefaults を使ってお使いの Mac 内にローカル保存します。この情報が外部に送信されることはありません。</p>
+
+  <h2>ファイルへのアクセス</h2>
+  <p>Kakikomi は macOS の App Sandbox 内で動作し、以下の範囲でのみファイルにアクセスします。</p>
+  <ul>
+    <li>ユーザーが書き込みを行った画像を「ピクチャ」フォルダへ保存する（アプリの主要機能）</li>
+    <li>ユーザーが「開く」「別名で保存」で明示的に選択したファイルの読み書き</li>
+  </ul>
+  <p>これら以外のファイルへ Kakikomi がアクセスすることはありません。</p>
+
+  <h2>画面キャプチャ機能について</h2>
+  <p>「画面取込」機能は Apple の ScreenCaptureKit（システム標準のピッカーUI）を使用します。取得した画像はアプリ内で処理されるのみで、外部へ送信されることはありません。</p>
+
+  <h2>お問い合わせ</h2>
+  <div class="card">
+    <p>本ポリシーについてご質問がある場合は、<a href="mailto:info@satrex.jp">info@satrex.jp</a> までご連絡ください。</p>
+  </div>
+
+  <footer>
+    &copy; 2026 satrex
+  </footer>
+</main>
+</body>
+</html>

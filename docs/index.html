@@ -1,0 +1,99 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Kakikomi — 画像に書き込む、いちばん速い方法</title>
+<meta name="description" content="Kakikomi は画像やスクリーンショットに文字・矢印・図形・モザイクを書き込める macOS ネイティブアプリです。">
+<style>
+  :root {
+    --bg: #f7f7f8;
+    --fg: #1a1a1a;
+    --accent: #ff3b7b;
+    --card: #ffffff;
+    --border: #e5e5e8;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #14161c;
+      --fg: #f0f0f2;
+      --card: #1c1f27;
+      --border: #2a2d36;
+    }
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    font-family: -apple-system, BlinkMacSystemFont, "Hiragino Sans", "Yu Gothic", sans-serif;
+    background: var(--bg);
+    color: var(--fg);
+    line-height: 1.7;
+  }
+  main {
+    max-width: 720px;
+    margin: 0 auto;
+    padding: 64px 24px 96px;
+  }
+  h1 {
+    font-size: 2rem;
+    margin-bottom: 4px;
+  }
+  .tagline {
+    color: var(--accent);
+    font-weight: 600;
+    margin-top: 0;
+  }
+  section {
+    margin-top: 48px;
+  }
+  h2 {
+    font-size: 1.15rem;
+    border-left: 4px solid var(--accent);
+    padding-left: 12px;
+  }
+  .card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 20px 24px;
+  }
+  a { color: var(--accent); }
+  footer {
+    margin-top: 64px;
+    font-size: 0.85rem;
+    opacity: 0.6;
+  }
+  ul { padding-left: 1.2em; }
+</style>
+</head>
+<body>
+<main>
+  <h1>Kakikomi（カキコミ）</h1>
+  <p class="tagline">画像に書き込む、いちばん速い方法。</p>
+
+  <p>Kakikomi は、画像やスクリーンショットに文字・矢印・図形・モザイクをすばやく書き込める macOS ネイティブアプリです。込み入った背景でもくっきり読める縁取り文字が特長です。</p>
+
+  <section>
+    <h2>サポート / お問い合わせ</h2>
+    <div class="card">
+      <p>不具合報告・ご要望は GitHub の Issue でお知らせください。</p>
+      <ul>
+        <li><a href="https://github.com/satrex/kakikomi/issues">GitHub Issues で報告する</a></li>
+        <li>メール: <a href="mailto:info@satrex.jp">info@satrex.jp</a></li>
+      </ul>
+    </div>
+  </section>
+
+  <section>
+    <h2>プライバシー</h2>
+    <div class="card">
+      <p>Kakikomi はデータを一切収集しません。詳しくは<a href="privacy.html">プライバシーポリシー</a>をご覧ください。</p>
+    </div>
+  </section>
+
+  <footer>
+    &copy; 2026 satrex
+  </footer>
+</main>
+</body>
+</html>

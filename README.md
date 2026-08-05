@@ -21,7 +21,14 @@ macOS ネイティブの画像書き込み（注釈）ツール。Skitch（開�
 xcodebuild -project Kakikomi.xcodeproj -scheme Kakikomi build
 ```
 
+## サポート / プライバシーポリシー
+
+- https://satrex.github.io/kakikomi/
+- https://satrex.github.io/kakikomi/privacy.html
+
 ## ドキュメント
 
 - [DESIGN.md](DESIGN.md) — 設計書（アーキテクチャ、描画方式、座標系の設計判断）
 - [codex-prompt.md](codex-prompt.md) — 実装時に使用したプロンプト
+- [AppReviewNotes.md](AppReviewNotes.md) — App Store 審査用メモ
+- [AppStoreListing.md](AppStoreListing.md) — App Store 掲載情報の下書き

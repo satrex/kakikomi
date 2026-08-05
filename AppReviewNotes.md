@@ -40,4 +40,4 @@ The app does not collect analytics, does not make network requests, does not use
 
 ## Contact
 
-If anything above needs clarification during review, please reach out to [CONTACT EMAIL].
+If anything above needs clarification during review, please reach out to info@satrex.jp.
