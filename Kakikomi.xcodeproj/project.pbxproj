@@ -25,6 +25,7 @@
 		A10000000000000000000014 /* DragExportService.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000000000000000000014 /* DragExportService.swift */; };
 		A10000000000000000000015 /* ScreenshotCaptureService.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000000000000000000015 /* ScreenshotCaptureService.swift */; };
 		A10000000000000000000013 /* Kakikomi.icns in Resources */ = {isa = PBXBuildFile; fileRef = A20000000000000000000013 /* Kakikomi.icns */; };
+		A10000000000000000000016 /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = A20000000000000000000016 /* PrivacyInfo.xcprivacy */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -49,6 +50,7 @@
 		A20000000000000000000013 /* Kakikomi.icns */ = {isa = PBXFileReference; lastKnownFileType = image.icns; path = Assets/Kakikomi.icns; sourceTree = "<group>"; };
 		A20000000000000000000014 /* DragExportService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DragExportService.swift; sourceTree = "<group>"; };
 		A20000000000000000000015 /* ScreenshotCaptureService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ScreenshotCaptureService.swift; sourceTree = "<group>"; };
+		A20000000000000000000016 /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -57,7 +59,7 @@
 
 /* Begin PBXGroup section */
 		A40000000000000000000001 = {isa = PBXGroup; children = (A40000000000000000000002 /* Kakikomi */, A40000000000000000000006 /* Products */); sourceTree = "<group>"; };
-		A40000000000000000000002 /* Kakikomi */ = {isa = PBXGroup; children = (A20000000000000000000001 /* KakikomiApp.swift */, A40000000000000000000003 /* ViewModels */, A40000000000000000000004 /* Views */, A40000000000000000000005 /* Models */, A40000000000000000000007 /* Services */, A20000000000000000000006 /* Kakikomi.entitlements */, A20000000000000000000013 /* Kakikomi.icns */); path = Kakikomi; sourceTree = "<group>"; };
+		A40000000000000000000002 /* Kakikomi */ = {isa = PBXGroup; children = (A20000000000000000000001 /* KakikomiApp.swift */, A40000000000000000000003 /* ViewModels */, A40000000000000000000004 /* Views */, A40000000000000000000005 /* Models */, A40000000000000000000007 /* Services */, A20000000000000000000006 /* Kakikomi.entitlements */, A20000000000000000000013 /* Kakikomi.icns */, A20000000000000000000016 /* PrivacyInfo.xcprivacy */); path = Kakikomi; sourceTree = "<group>"; };
 		A40000000000000000000003 /* ViewModels */ = {isa = PBXGroup; children = (A20000000000000000000002 /* DocumentViewModel.swift */); path = ViewModels; sourceTree = "<group>"; };
 		A40000000000000000000004 /* Views */ = {isa = PBXGroup; children = (A20000000000000000000003 /* ContentView.swift */, A20000000000000000000004 /* CanvasRepresentable.swift */, A20000000000000000000005 /* CanvasView.swift */, A2000000000000000000000C /* TextEditingOverlay.swift */, A20000000000000000000011 /* DragExportView.swift */, A20000000000000000000012 /* InspectorView.swift */); path = Views; sourceTree = "<group>"; };
 		A40000000000000000000005 /* Models */ = {isa = PBXGroup; children = (A20000000000000000000009 /* Annotation.swift */, A2000000000000000000000A /* TextAnnotation.swift */, A2000000000000000000000D /* ArrowAnnotation.swift */, A20000000000000000000008 /* CodableColor.swift */); path = Models; sourceTree = "<group>"; };
@@ -74,7 +76,7 @@
 /* End PBXProject section */
 
 /* Begin PBXResourcesBuildPhase section */
-		A70000000000000000000001 /* Resources */ = {isa = PBXResourcesBuildPhase; buildActionMask = 2147483647; files = (A10000000000000000000013 /* Kakikomi.icns in Resources */); runOnlyForDeploymentPostprocessing = 0; };
+		A70000000000000000000001 /* Resources */ = {isa = PBXResourcesBuildPhase; buildActionMask = 2147483647; files = (A10000000000000000000013 /* Kakikomi.icns in Resources */, A10000000000000000000016 /* PrivacyInfo.xcprivacy in Resources */); runOnlyForDeploymentPostprocessing = 0; };
 /* End PBXResourcesBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */

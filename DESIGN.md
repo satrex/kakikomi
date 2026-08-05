@@ -280,7 +280,7 @@ Kakikomi/
 | M4 | 矢印注釈 | |
 | M5 | ピクチャ保存・クリップボード・ドラッグタブ書き出し | Sandbox有効ビルドで保存成功 |
 | M6 | インスペクタ（色/フォント/縁幅）、設定、アイコン | |
-| M7 | App Store 提出準備（スクショ、審査ノート、公証） | |
+| M7 | App Store 提出準備（アイコン最終調整、スクショ、審査ノート） | §16 参照。App Store 経由配布は審査時に自動で公証されるため、`notarytool` による individual 公証は不要（Developer ID 直接配布の場合のみ必要） |
 
 ---
 
@@ -484,3 +484,52 @@ struct ShapeAnnotation: Annotation {
 - 再発防止: 右端の操作ボタン群（保存・モード切替）は `.fixedSize()` で
   圧縮されないようにし、ツールピッカー側を先に圧縮させる。
   アイコン化後のツールバー必要幅は最小ウィンドウ幅 900 に対して十分小さい
+
+---
+
+## 16. App Store 提出準備 v2.0.2（M7）
+
+2026-08-05 の作業で確定。技術的に準備できるものと、ユーザー自身が App Store Connect /
+Apple Developer Program 上で行う必要があるものを切り分ける。
+
+### 完了（このセッションで対応）
+
+- **アイコン**: バンドル `.icns` は10サイズ全て揃っていたが、128px 以上の表現に
+  アルファチャンネルが無く角が黒塗りされており、Dock/Finder で黒い四角として
+  表示される不具合があった。1024マスターから角領域をフラッドフィルで検出し
+  アルファ0に変換して再構築（`Kakikomi/Assets/Kakikomi.icns`）。同じマスクを使い、
+  App Store Connect 提出用のフルブリード1024×1024（角丸なし・アルファなし）を
+  別途生成（`Kakikomi/Assets/AppStore-Marketing-1024.png`。App Store Connect の
+  「App アイコン」欄に手動アップロードする用途で、アプリバンドルには含まれない）
+- **スクリーンショット**: 実際の `AnnotationRenderer`/`ImageExporter` パイプラインで
+  合成の抽象背景（実在サービスを模さないもの）に本物の注釈を描画し、2880×1800 の
+  ヒーローショットを3枚生成（判読性訴求／ツール概要／モザイク実用例）。UI 自動操作は
+  このセッションからアクセシビリティ権限を付与できず、画像読み込み後の実操作
+  スクリーンショットは撮れていない（空状態の900×652参考ショットのみ）
+- **審査ノート**: `AppReviewNotes.md` に、Sandbox entitlement の用途・
+  ScreenCaptureKit ピッカー使用時に権限プロンプトが出ない理由・データ収集なしの旨を
+  英語でまとめた（App Store Connect の Notes 欄にそのまま貼り付け可能）
+
+### プライバシーマニフェスト（別途 codex-cycle で実装）
+
+`@AppStorage("uiMode")` が UserDefaults を使用しており、2024年以降の Apple の
+Privacy Manifest 要件（Required Reason API: User Defaults APIs、理由コード
+`CA92.1` = 自アプリ専用データへのアクセス）に該当する。`PrivacyInfo.xcprivacy` を
+追加しないと App Store Connect のアップロード時に検証エラーになり得るため、
+`Kakikomi/PrivacyInfo.xcprivacy` として追加し pbxproj のリソースに組み込む。
+
+### ユーザー自身が行う必要がある項目（Claude/Codex では対応不可）
+
+- Apple Developer Program の登録（未登録の場合）
+- Xcode の Signing & Capabilities で `DEVELOPMENT_TEAM` を自分のチームに設定
+  （現状 `CODE_SIGN_STYLE = Automatic` だがチーム未指定）
+- App Store Connect でのアプリレコード作成（Bundle ID `jp.satrex.Kakikomi` の登録含む）
+- 価格・配信地域・年齢区分アンケート・輸出コンプライアンス（暗号化なしのため
+  該当なしで回答できる見込み）
+- プライバシー「栄養ラベル」の入力（データ収集なしのため「No, we do not collect
+  data」で回答できる見込み）
+- マーケティング用の説明文・キーワード・サポート URL の用意
+- `AppStore-Marketing-1024.png` の App Store Connect への手動アップロード
+- スクリーンショットの最終選定・必要なら実操作ショットへの差し替え、
+  App Store Connect へのアップロード
+- Xcode Organizer からのアーカイブ・アップロード（公証は審査時に自動）
